@@ -48,7 +48,7 @@
 | Bean Validation | Boot 4 BOM | ✅ | |
 | Lombok | Boot 4 BOM | ✅ | annotation processor 설정 완료. 엔티티·DTO 보일러플레이트 축소 |
 | Spring Boot DevTools | Boot 4 BOM | ✅ | 로컬 전용(optional). 운영 빌드에 포함하지 않는다 |
-| springdoc-openapi | **3.1.0 이상** | ❌ Phase 2 | **2.x 금지** (Boot 4 미지원). 3.0.x도 Jackson 2/3 마찰 보고됨 → 3.1.0 이상 사용하고 Phase 2에서 기동 확인 |
+| springdoc-openapi | 3.1.0 | ✅ | **설치 완료(Phase 2).** Maven Central에서 3.1.0 확인 후 설치. 로컬 기동 시 Swagger UI 정상 표시, prod 프로파일에서는 비활성화(404) 확인 완료 |
 | jsoup | 1.18.x | ❌ Phase 4 | HTML 정제 (FR-T03). `Safelist`는 FR-T02 툴바 8종으로 한정. **`preserveRelativeLinks` 활성화 금지** (`javascript:` 우회 취약점) |
 | spring-boot-starter-mail | Boot 4 BOM | ❌ Phase 9 | 메일 발송 (FR-R01). 로컬은 로그 출력 구현체 사용 |
 | AWS SDK v2 (`s3`) | 2.x | ❌ Phase 12 | S3 저장소·presigned URL (FR-F03, FR-F05) |
