@@ -95,7 +95,7 @@ Git 훅(husky, `todo-frontend/`에 설치): pre-commit은 `lint-staged`, commit-
 - **미설치 라이브러리를 `import` 하지 않는다.** PRD 1.3 표에서 설치 상태가 ❌인 것은 담당 Phase에서 설치한 뒤 사용한다. (예: TanStack Query·next-themes는 Phase 5, React Hook Form+Zod는 Phase 6, Tiptap·Framer Motion은 Phase 7, jsoup은 Phase 4)
 - **springdoc-openapi는 3.1.0 이상.** 2.x는 Boot 4 미지원이고 3.0.x도 Jackson 마찰이 보고되어 있다.
 - **시크릿을 소스에 하드코딩하지 않는다.** PRD 9.1 환경변수 표의 12종(`DB_*`, `JWT_SECRET`, `GOOGLE_*`, `APP_*`, `NEXT_PUBLIC_API_BASE_URL`)은 전부 외부 주입이다. `.env*`·`application-local.yml`은 커밋 금지.
-- **⚠️ 중첩 git 저장소:** 현재 `todo-backend/.git`과 `todo-frontend/.git`이 독립 저장소로 존재하고 루트 저장소는 커밋이 0개다. ROADMAP 6장은 **루트 단일 저장소**를 전제하므로 Phase 0에서 통합해야 한다. 그 전까지는 루트에서 `git add`를 해도 하위 프로젝트 파일이 추적되지 않는다.
+- **3개 독립 저장소:** 루트/`todo-backend`/`todo-frontend`가 각각 독립된 `.git`을 가지며, 이는 의도적으로 유지되는 구조다(통합하지 않음). 각 폴더에서 개별적으로 커밋한다. 루트 `.gitignore`는 `todo-backend/`·`todo-frontend/`를 무시하도록 되어 있어 정상이다.
 - 프론트엔드 자동화 테스트는 범위 밖이며, **E2E 도구를 신규 도입하지 않는다.**
 - `todo-frontend/AGENTS.md`의 `nextjs-agent-rules` 블록은 `next dev`가 자동 생성·재작성한다. 지우지 말고 변경분과 함께 커밋한다.
 
