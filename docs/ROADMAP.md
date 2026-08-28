@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.6 |
+| 문서 버전 | 1.7 |
 | 기준 문서 | `PRD.md` v1.4 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
@@ -90,6 +90,14 @@ M1 ─────────────────────────�
   - Soft Delete 동작 — `Todo`는 `@SQLRestriction("deleted_at IS NULL")`, **`users`에는 걸지 않고 Repository 조건으로 처리**(PRD 7장 조회 규칙)
   - `todolist_db` 스키마에 PRD 7장 인덱스가 실제로 생성됐음을 `\di`로 확인
 - **주의:** Hibernate 6.4+의 `@SoftDelete`는 boolean 기반이라 `deleted_at TIMESTAMP` 규약과 맞지 않으므로 사용하지 않는다. `@NotFound`도 강제 eager 로딩을 유발하므로 금지 (PRD 7장)
+- **현재 상태(2026-08-28 기준): 완료.**
+  - `BaseTimeEntity`(`created_at`/`updated_at`, `@CreationTimestamp`/`@UpdateTimestamp`)와 이를 상속하는 `BaseEntity`(`deleted_at` 추가)로 공통 컬럼 계층을 분리. `@SQLRestriction`은 BaseEntity가 아니라 `Todo` 클래스에만 개별 부여(BaseEntity에 두면 `User`에도 강제 적용되는 문제 방지)
+  - `User`(`com.example.user.entity`)·`Todo`(`com.example.todo.entity`) 엔티티와 `UserRepository`·`TodoRepository`(`JpaRepository` 상속) 작성. `UserRepository`는 `findByEmailAndDeletedAtIsNull`·`existsByEmailAndDeletedAtIsNull` 2종만 추가(Phase 2/3 대비), `TodoRepository`는 커스텀 메서드 없이 기본 CRUD만(페이지네이션·필터는 Phase 4)
+  - `PasswordResetToken`·`Attachment` 엔티티는 이번 Phase 산출물이 아님(각각 Phase 9·10) — ROADMAP 산출물란 명시에 따름
+  - `db/init.sql` 작성: `CREATE SCHEMA IF NOT EXISTS todolist_db` 확정 SQL + 최초 관리자 지정(FR-M03) 주석 처리 템플릿(실제 가입 이메일이 생기는 Phase 2 이후 활성화)
+  - `./mvnw clean compile` 성공(10개 소스 파일). `spring-boot:run` 기동 후 `psql`로 `todolist_db.users`·`todolist_db.todos` 컬럼이 snake_case로 생성됨을 확인, `priority`/`provider`/`role`이 `character varying`(STRING, ordinal 아님)임을 확인
+  - 인덱스 4종(`uk_users_email`, `idx_todos_user_deleted_created`, `idx_todos_user_deleted_due`, PK 2종) 실제 생성을 `pg_indexes` 조회로 확인
+  - `todo-backend` 저장소에 커밋 완료(`✨ feat: [Phase 1] DB 스키마와 엔티티 구현`)
 
 #### Phase 2 · 인증 (Security + JWT)
 - **목표:** 이메일 가입/로그인과 토큰 인증
@@ -315,7 +323,7 @@ M1 ─────────────────────────�
 
 **M1 — 핵심 MVP**
 - [x] Phase 0 · 스캐폴딩 (**프로파일 분리 포함**)
-- [ ] Phase 1 · 엔티티와 Repository (**DDL 전략 확정**)
+- [x] Phase 1 · 엔티티와 Repository (**DDL 전략 확정**)
 - [ ] Phase 2 · 인증 (**springdoc 설치 · 에러 코드 체계 확정**)
 - [ ] Phase 3 · 구글 OAuth2
 - [ ] Phase 4 · Todo API (**jsoup 설치**)
@@ -386,3 +394,4 @@ M1 ─────────────────────────�
 | 1.4 | 2026-08-28 | **PRD v1.4 반영 동기화.** ① 기준 문서를 PRD v1.4로 갱신 ② **Phase 3** — FR-A09 완료 조건에 소셜 로그인 조회 키가 `email`이며 `provider_id`가 아님을 명시(PRD 7장 `users` 신설 규정) ③ **Phase 10** — 첨부 API를 4종에서 **5종**으로 정정(PRD 8장에 신설된 `GET /api/attachments/{id}/download` 반영), `/download`가 서명 토큰만으로 인증되고 실패 시 404라는 조건 추가, **프론트가 저장소 종류를 분기하지 않는다**는 이식성 조건 추가, `APP_UPLOAD_DIR`·`APP_DOWNLOAD_URL_TTL_SECONDS` 주입 조건 추가(PRD 9.1 신설분) ④ **Phase 12-1** — 점검 대상을 "환경변수 8종"에서 **"9.1 전 항목"**으로 교체하고 파일 저장소 4종을 예시로 명시(PRD 9.1이 12종으로 늘어난 것 반영) ⑤ **Phase 12-3** — S3 전환 시 `/download`가 호출되지 않는다는 동작 변화와 프론트 코드 무변경, `APP_S3_BUCKET`·`APP_S3_REGION` 주입을 완료 조건에 추가 |
 | 1.5 | 2026-08-28 | **저장소 구조 방침 전환.** 사용자가 루트/`todo-backend`/`todo-frontend` **3개 독립 git 저장소를 유지**하기로 명시적으로 확정함에 따라, v1.3에서 추가했던 "Phase 0에 저장소 통합" 요구를 철회. 진행 원칙 2, Phase 0(목표·산출물·완료조건·현재상태), 진행 체크리스트, 6장 형상 관리, 7장 일정 표를 3분할 전제로 수정. 3개 저장소 모두 초기 커밋 완료 반영(루트 1개, `todo-backend` 1개, `todo-frontend` 기존 1개 + 3개 추가) |
 | 1.6 | 2026-08-28 | **Phase 0 완료 반영.** ① 백엔드 `application.properties`를 `application.yml`(공통)+`application-local.yml`(로컬, 커밋 금지)+`application-prod.yml`(운영) 프로파일 3분리로 전환 완료(Spring Boot 4.1.1 표준 프로파일 관례 적용, `./mvnw compile` 성공·`git check-ignore` 확인 완료) ② 루트 `README.md`(한글) 작성 완료 ③ `/tasks/000-sample.md` 작업 파일 규약 샘플 작성 완료 ④ Phase 0 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 0 항목 체크 |
+| 1.7 | 2026-08-28 | **Phase 1 완료 반영.** ① `BaseTimeEntity`/`BaseEntity` 2단 `@MappedSuperclass` 계층, `User`·`Todo` 엔티티, `UserRepository`·`TodoRepository`, `db/init.sql` 작성 완료(`PasswordResetToken`·`Attachment`는 Phase 9·10 산출물이므로 이번 범위 아님) ② `@SQLRestriction`을 `Todo`에만 개별 부여하고 `User`에는 적용하지 않음으로써 PRD 7장 조회 규칙 준수 ③ `./mvnw clean compile`·`spring-boot:run` 기동·`psql`을 통해 테이블 snake_case 컬럼·STRING enum·인덱스 4종(`uk_users_email` 포함) 생성을 실측 확인 ④ Phase 1 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 1 항목 체크 |
