@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.4 |
+| 문서 버전 | 1.6 |
 | 기준 문서 | `PRD.md` v1.4 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
@@ -62,11 +62,13 @@ M1 ─────────────────────────�
   - **루트/`todo-backend`/`todo-frontend` 3개 저장소 각각에 최초 커밋이 존재**하고 각 저장소의 `git status`가 clean함
   - `.env*`·`application-local.yml`이 `git check-ignore`로 무시됨을 확인
   - PRD 9.1 표의 환경변수가 모두 `application-local.yml`(또는 `.env.local`)에서 주입되고 소스에 하드코딩되지 않음
-- **현재 상태(2026-08-28 기준):**
+- **현재 상태(2026-08-28 기준): 완료.**
   - 루트/`todo-backend`/`todo-frontend` 3개 저장소에 초기 커밋 완료(루트 1개, backend 1개, frontend는 기존 1개에 3개 추가). 3분할 구조는 의도적 결정이며 진행 원칙 2·6장과 일치한다.
-  - 루트 `README.md`는 아직 없음(별도 작업 필요)
-  - 백엔드 설정이 `application.properties` **단일 파일**이라 PRD 9.1의 `application-local.yml` 규약과 형식·분리 모두 불일치 → **`.yml` 전환 + 프로파일 분리**가 이 Phase의 남은 작업
-- **주의:** 여기서 환경변수 분리를 제대로 해두지 않으면 Phase 12에서 전부 되돌아와야 한다
+  - 루트 `README.md` 작성 완료(한글, 저장소 구조·문서 계층·로컬 실행법 포함)
+  - 백엔드 설정을 `application.properties` 단일 파일에서 `application.yml`(공통) + `application-local.yml`(로컬, 커밋 금지) + `application-prod.yml`(운영) 프로파일 3분리로 전환 완료. `spring.profiles.active: local`을 공통 파일 기본값으로 지정. `./mvnw compile` 성공, `application-local.yml`·`application-prod.yml`이 `git check-ignore -v`로 무시됨을 확인
+  - `/tasks/` 디렉터리와 `000-sample.md` 작업 파일 규약 샘플 작성 완료
+  - `npm run build` 성공 확인(프론트 변경 없음, 회귀 없음 재확인)
+- **주의:** JWT_SECRET·GOOGLE_*·APP_* 등 PRD 9.1의 나머지 환경변수는 코드가 아직 참조하지 않으므로 이번 Phase에서 yml에 채우지 않았다. 해당 Phase(2/3/9/10)에서 추가한다
 
 #### Phase 1 · DB 스키마와 엔티티
 - **목표:** 데이터 계층 완성
@@ -312,7 +314,7 @@ M1 ─────────────────────────�
 ## 5. 진행 체크리스트
 
 **M1 — 핵심 MVP**
-- [ ] Phase 0 · 스캐폴딩 (**프로파일 분리 포함**)
+- [x] Phase 0 · 스캐폴딩 (**프로파일 분리 포함**)
 - [ ] Phase 1 · 엔티티와 Repository (**DDL 전략 확정**)
 - [ ] Phase 2 · 인증 (**springdoc 설치 · 에러 코드 체계 확정**)
 - [ ] Phase 3 · 구글 OAuth2
@@ -383,3 +385,4 @@ M1 ─────────────────────────�
 | 1.3 | 2026-08-28 | **코드베이스 실사 기반 개정.** ① **중첩 `.git` 문제 명시** — `todo-backend/.git`·`todo-frontend/.git`이 독립 저장소로 존재해 6장 형상 관리(단일 `main` + Phase 브랜치·태그)와 진행 원칙 2가 성립하지 않는 문제를 6장과 Phase 0에 기록하고, **저장소 통합을 Phase 0 산출물·완료 조건으로 추가** ② **Phase 0 실사 반영** — 루트 `.gitignore`·`README.md` 부재, 커밋 0개, `application.properties` 단일 파일 상태를 "현재 상태(미완료)"로 명기하고, PRD 9.1에 맞춰 **`application.yml`/`-local.yml`/`-prod.yml` 프로파일 분리**를 산출물로 추가 ③ **Phase 1에 DDL 생성 전략 신설** — `db/init.sql`이 실재하지 않고 코드는 `ddl-auto=update`인 불일치를 해소. 로컬은 `update`, PRD 7장 인덱스 4종·unique는 `@Table(indexes=...)`로 선언, `db/init.sql`은 스키마 생성·관리자 지정 SQL 전용, **`validate` 전환은 Phase 12-2**로 못박음 ④ **미설치 라이브러리 설치 단계를 전 Phase에 명시** — Phase 2 springdoc-openapi, Phase 4 jsoup, Phase 6 React Hook Form+Zod, Phase 7 Tiptap·Framer Motion, Phase 9 spring-boot-starter-mail, Phase 12-3 AWS SDK v2(s3) 누락 보정 ⑤ **진행 원칙 6 신설** — 설치 후 **PRD 1.3 표 갱신**을 완료 조건화(PRD 1.3 양방향 동기화 의무) ⑥ **진행 원칙 7 신설** — `/tasks/XXX-description.md` 작업 파일 규약 명문화, Phase 0에 `/tasks/` 디렉터리 생성 추가 ⑦ **완료 조건을 측정 가능한 형태로 재작성** — 각 Phase에 FR ID를 붙이고 수치·응답 형식(6자·24h·10건·0-base·404/403/409·`ApiResponse`/`PageResponse`/평면 에러)을 명시 ⑧ **Phase 2에 에러 코드 체계 확정 과제 추가**(PRD 8.1 위임 사항이 어느 Phase에도 없던 누락 보정) ⑨ **Phase 4에 FR-T03 정제 범위 구체화** — `<img>` 제거·`Safelist` 8종 한정·`preserveRelativeLinks` 금지(PRD 1.3·2장 비목표) ⑩ **Phase 5 커버에 FR-U02 다크 기본, Phase 7에 Tiptap 툴바 8종·이미지 버튼 금지** 명시 ⑪ **Phase 8 검증 경로 이원화 명문화** — 12.1 항목별로 통합테스트 담당분과 로컬 체크리스트 담당분을 분리하고 **E2E 도구 신규 도입 금지**(PRD 9장 테스트) 명시 ⑫ **Phase 12 각 단계 완료 조건을 PRD 9장·9.1 기준 검증 가능 항목으로 교체**(모호한 "점검 10항목/13항목" 제거) ⑬ **추적 매트릭스 보강** — FR-U08(Phase 4), FR-R01/F03·F05의 12-3 전환, FR-M06의 Phase 2 전제, PRD 7장·8.1·12.1·12.2·14장 행 추가 ⑭ **진행 체크리스트에 설치·확정 과제 표시**와 문서 동기화 상시 항목 추가 ⑮ Phase 11에 OPEN-01~04 결정 과제를 별도 항목으로 분리(PRD 13·14장) |
 | 1.4 | 2026-08-28 | **PRD v1.4 반영 동기화.** ① 기준 문서를 PRD v1.4로 갱신 ② **Phase 3** — FR-A09 완료 조건에 소셜 로그인 조회 키가 `email`이며 `provider_id`가 아님을 명시(PRD 7장 `users` 신설 규정) ③ **Phase 10** — 첨부 API를 4종에서 **5종**으로 정정(PRD 8장에 신설된 `GET /api/attachments/{id}/download` 반영), `/download`가 서명 토큰만으로 인증되고 실패 시 404라는 조건 추가, **프론트가 저장소 종류를 분기하지 않는다**는 이식성 조건 추가, `APP_UPLOAD_DIR`·`APP_DOWNLOAD_URL_TTL_SECONDS` 주입 조건 추가(PRD 9.1 신설분) ④ **Phase 12-1** — 점검 대상을 "환경변수 8종"에서 **"9.1 전 항목"**으로 교체하고 파일 저장소 4종을 예시로 명시(PRD 9.1이 12종으로 늘어난 것 반영) ⑤ **Phase 12-3** — S3 전환 시 `/download`가 호출되지 않는다는 동작 변화와 프론트 코드 무변경, `APP_S3_BUCKET`·`APP_S3_REGION` 주입을 완료 조건에 추가 |
 | 1.5 | 2026-08-28 | **저장소 구조 방침 전환.** 사용자가 루트/`todo-backend`/`todo-frontend` **3개 독립 git 저장소를 유지**하기로 명시적으로 확정함에 따라, v1.3에서 추가했던 "Phase 0에 저장소 통합" 요구를 철회. 진행 원칙 2, Phase 0(목표·산출물·완료조건·현재상태), 진행 체크리스트, 6장 형상 관리, 7장 일정 표를 3분할 전제로 수정. 3개 저장소 모두 초기 커밋 완료 반영(루트 1개, `todo-backend` 1개, `todo-frontend` 기존 1개 + 3개 추가) |
+| 1.6 | 2026-08-28 | **Phase 0 완료 반영.** ① 백엔드 `application.properties`를 `application.yml`(공통)+`application-local.yml`(로컬, 커밋 금지)+`application-prod.yml`(운영) 프로파일 3분리로 전환 완료(Spring Boot 4.1.1 표준 프로파일 관례 적용, `./mvnw compile` 성공·`git check-ignore` 확인 완료) ② 루트 `README.md`(한글) 작성 완료 ③ `/tasks/000-sample.md` 작업 파일 규약 샘플 작성 완료 ④ Phase 0 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 0 항목 체크 |
