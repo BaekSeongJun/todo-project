@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.8 |
+| 문서 버전 | 1.10 |
 | 기준 문서 | `PRD.md` v1.5 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
@@ -179,6 +179,19 @@ M1 ─────────────────────────�
   - **`QueryProvider`가 루트 레이아웃에 마운트되고 `queryClient` 인스턴스에 접근 가능**(Phase 6의 FR-A11 캐시 비움, Phase 7의 FR-U05 낙관적 업데이트 전제)
   - API 클라이언트가 `NEXT_PUBLIC_API_BASE_URL` 환경변수를 사용하고 주소를 하드코딩하지 않음 (PRD 9.1)
   - **PRD 1.3 표의 TanStack Query·next-themes 설치 상태 갱신**
+- **현재 상태(2026-08-31 기준): 완료.**
+  - `@tanstack/react-query`(^5.102.8)·`next-themes`(^0.4.6) 설치, `npx shadcn add skeleton`으로 `components/ui/skeleton.tsx` 추가
+  - `next.config.ts`에 `typedRoutes: true`를 이 Phase에서 선제 적용(Next 16 최상위 옵션). PRD·ROADMAP에 명시된 산출물은 아니나, Phase 6·7에서 늘어날 라우트의 `Link href` 타입 안전성을 처음부터 확보하기 위한 선택
+  - `types/api.ts`에 `ApiResponse<T>`·`PageResponse<T>`·`ApiErrorBody`(PRD 8.1) 타입을 백엔드 `ErrorResponse` record와 정확히 일치시켜 정의
+  - `lib/auth/token.ts`를 최소 버전으로 선작성(localStorage 기반 `getToken`/`setToken`/`removeToken`). ROADMAP상 정식 산출물은 Phase 6이지만, `lib/api/client.ts`가 FR-A05(요청마다 `Authorization: Bearer` 자동 첨부)를 충족하려면 지금 필요해 최소 기능만 먼저 만들었다
+  - `lib/api/client.ts`(`fetchApi<T>` 단일 함수 + `ApiError` 클래스)를 작성. 401 응답 시 토큰을 삭제하고 `CustomEvent('todo:unauthorized')`를 발행하되, 실제 리다이렉트·만료 안내(FR-A06)는 이 이벤트를 구독하는 Phase 6의 `useAuth`에 위임 — `client.ts`는 React 트리 밖의 순수 함수라 `useRouter()`를 직접 쓸 수 없기 때문
+  - `providers/QueryProvider.tsx`(`useState`로 `QueryClient` 인스턴스당 1회 생성, SSR 캐시 누수 방지)·`providers/ThemeProvider.tsx`(`next-themes`, `defaultTheme="dark"` + `enableSystem={false}`로 시스템 감지가 아닌 다크 고정 기본값 구현) 작성 후 `app/layout.tsx`에 마운트, `<html>`에 `suppressHydrationWarning` 추가
+  - `components/common/`에 `Pagination`(0-base로 값을 받고 화면 표시 직전에만 1-base 변환, 생략(…) 처리, 모바일 축약형)·`EmptyState`·`ErrorState`·`Skeleton`(`TodoListSkeleton`)·`Header`·`ThemeToggle` 작성
+  - `next-themes` 공식 예시(`useEffect`로 `mounted` state 설정)가 `eslint-config-next` 16.3.3의 `react-hooks/set-state-in-effect` 규칙에 걸리는 것을 실측 확인. `useTheme()`의 `resolvedTheme`이 마운트 전 `undefined`를 반환하는 특성으로 대체해 별도 state 없이 해결
+  - `.env.local.example` 신설. `.gitignore`의 `.env*` 패턴이 이 파일까지 무시하는 것을 `git check-ignore`/`git status`로 확인해 `!.env*.example` 예외 패턴 추가
+  - `npm run typecheck`·`npm run lint`·`npm run format:check`·`npm run build` 전체 통과. `npx shadcn add skeleton`이 생성한 파일이 프로젝트 Prettier 규칙과 달라 `prettier --write`로 재포맷
+  - Playwright로 `npm run dev` 실제 기동 후 브라우저 확인: `<html class="... dark">` 정상 적용, 콘솔 에러·경고 0건
+  - `docs/PRD.md` 1.3 표의 TanStack Query·next-themes 설치 상태를 실제 설치 버전(^5.102.8·^0.4.6)과 함께 ✅로 갱신
 
 #### Phase 6 · 인증 화면
 - **목표:** 로그인 흐름 완성
@@ -344,7 +357,7 @@ M1 ─────────────────────────�
 - [ ] Phase 2 · 인증 (**springdoc 설치 · 에러 코드 체계 확정**)
 - [x] Phase 3 · 구글 OAuth2
 - [x] Phase 4 · Todo API (**jsoup 설치**)
-- [ ] Phase 5 · 프론트 토대 (**TanStack Query · next-themes 설치**)
+- [x] Phase 5 · 프론트 토대 (**TanStack Query · next-themes 설치**)
 - [ ] Phase 6 · 인증 화면 (**React Hook Form · Zod 설치**)
 - [ ] Phase 7 · 할 일 화면 (**Tiptap · Framer Motion 설치**)
 - [ ] Phase 8 · 통합테스트 · **M1 게이트 (PRD 12.1)**
@@ -389,7 +402,7 @@ M1 ─────────────────────────�
 | 2 | | | |
 | 3 | | | 구글 OAuth2, 실제 계정 end-to-end 검증 완료 |
 | 4 | | | Todo API 6종 + jsoup 정제, 로컬 서버 통합 검증 완료 |
-| 5 | | | |
+| 5 | | | TanStack Query·next-themes 설치, API 클라이언트·공통 컴포넌트 6종, Playwright 실측 검증 완료 |
 | 6 | | | |
 | 7 | | | |
 | 8 | | | M1 게이트 |
@@ -414,3 +427,4 @@ M1 ─────────────────────────�
 | 1.7 | 2026-08-28 | **Phase 1 완료 반영.** ① `BaseTimeEntity`/`BaseEntity` 2단 `@MappedSuperclass` 계층, `User`·`Todo` 엔티티, `UserRepository`·`TodoRepository`, `db/init.sql` 작성 완료(`PasswordResetToken`·`Attachment`는 Phase 9·10 산출물이므로 이번 범위 아님) ② `@SQLRestriction`을 `Todo`에만 개별 부여하고 `User`에는 적용하지 않음으로써 PRD 7장 조회 규칙 준수 ③ `./mvnw clean compile`·`spring-boot:run` 기동·`psql`을 통해 테이블 snake_case 컬럼·STRING enum·인덱스 4종(`uk_users_email` 포함) 생성을 실측 확인 ④ Phase 1 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 1 항목 체크 |
 | 1.8 | 2026-08-31 | **Phase 3 완료 반영.** ① `CustomOAuth2UserService`(email 기준 조회·생성, FR-A09)·`OneTimeCodeStore`(인메모리 TTL 저장소, FR-A08)·`OAuth2LoginSuccessHandler`(JWT를 URL에 노출하지 않고 일회용 코드만 전달)·`POST /api/auth/oauth/exchange`(코드→JWT 교환) 구현 완료, `SecurityConfig`에 `oauth2Login()` DSL 연결 ② 단위 테스트 4종(`OneTimeCodeStoreTest`·`CustomOAuth2UserServiceTest`·`OAuth2LoginSuccessHandlerTest`·`AuthServiceTest`) 작성, `./mvnw test` 전체 통과 ③ 실제 구글 계정으로 `/oauth2/authorization/google` 진입부터 `/api/auth/me` 호출·코드 재사용 차단까지 end-to-end 수동 검증 완료 ④ PRD 9.1에 `APP_OAUTH_REDIRECT_URL` 환경변수 신설 반영 ⑤ Phase 3 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 3 항목 체크, 7장 일정 표 비고 기록 |
 | 1.9 | 2026-08-31 | **Phase 4 완료 반영.** ① `TodoController`(API 6종)·`TodoService`(소유권 검증·HTML 정제·페이지네이션 통합)·`TodoRepository` 필터 메서드·`common.response.PageResponse<T>`·`common.exception.TodoNotFoundException`·`todo.util.HtmlSanitizer`(jsoup 1.18.3, `Safelist` 화이트리스트) 구현 완료 ② 타인 리소스 접근 시 존재 여부와 무관하게 단일 쿼리(`findByIdAndUserId`)로 404 통일(FR-T07), `@SQLRestriction`으로 Soft Delete 후 목록·단건 조회 모두 제외(FR-T06) 확인 ③ 상태 필터(`all`/`pending`/`completed`)·정렬(`createdAt`/`dueDate`, 화이트리스트 폴백)·`PageResponse<T>`(0-base) 응답 형식 확인(FR-L01~L04) ④ 단위·슬라이스 테스트 5개 클래스 신설(총 29건), `./mvnw test` 전체 44건 통과 ⑤ 로컬 서버 실기동으로 Swagger 6종 노출·401·전체 CRUD·타인 소유 404까지 통합 검증 완료 ⑥ Spring Boot 4의 `@DataJpaTest`/`@AutoConfigureTestDatabase` 패키지 이동과 `Replace.NONE` 필수 사실을 실측 확인(Phase 9·10 재사용 예정) ⑦ `docs/PRD.md` 1.3 표의 jsoup 설치 상태를 1.18.3/✅로 갱신 ⑧ Phase 4 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 4 항목 체크, 7장 일정 표 비고 기록, `/tasks/001-todo-api.md` 작업 파일 신설 |
+| 1.10 | 2026-08-31 | **Phase 5 완료 반영.** ① `@tanstack/react-query`(^5.102.8)·`next-themes`(^0.4.6) 설치, `next.config.ts`에 `typedRoutes: true` 선제 적용 ② `types/api.ts`(백엔드 `ErrorResponse` record와 필드 일치)·`lib/auth/token.ts`(Phase 6 정식 완성 전 최소 버전)·`lib/api/client.ts`(`fetchApi<T>` + `ApiError`, 401 시 `CustomEvent` 발행으로 Phase 6에 리다이렉트 위임) 작성 ③ `providers/QueryProvider.tsx`(`useState` 기반 SSR-safe 인스턴스)·`providers/ThemeProvider.tsx`(`defaultTheme="dark"` + `enableSystem={false}`로 시스템 감지 아닌 다크 고정 기본값)를 `app/layout.tsx`에 마운트, `suppressHydrationWarning` 추가 ④ `components/common/`에 `Pagination`(0-base 유지, 표시 직전에만 1-base 변환)·`EmptyState`·`ErrorState`·`Skeleton`·`Header`·`ThemeToggle` 6종 작성 ⑤ next-themes 공식 `mounted` state 예시가 `eslint-config-next` 16.3.3의 `react-hooks/set-state-in-effect` 규칙과 충돌하는 것을 실측하고 `resolvedTheme` 기반으로 대체 ⑥ `.env.local.example` 신설, `.gitignore`에 `!.env*.example` 예외 패턴 추가 ⑦ `npm run typecheck`·`lint`·`format:check`·`build` 전체 통과, Playwright로 다크 모드 기본 적용·콘솔 에러 0건 실측 확인 ⑧ `docs/PRD.md` 1.3 표의 TanStack Query·next-themes 설치 상태 갱신 ⑨ Phase 5 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 5 항목 체크, 7장 일정 표 비고 기록 |

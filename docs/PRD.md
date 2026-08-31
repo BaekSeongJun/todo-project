@@ -66,8 +66,8 @@
 | lucide-react | ^1.34.0 | ✅ | |
 | shadcn 부속 유틸 | — | ✅ | `clsx`, `tailwind-merge`, `class-variance-authority`, `tw-animate-css`. shadcn/ui 설치 시 함께 들어옴 |
 | ESLint / Prettier / husky / lint-staged / commitlint | — | ✅ | 코드 품질 도구 |
-| TanStack Query | — | ❌ Phase 5 | 서버 상태 관리 |
-| next-themes | — | ❌ Phase 5 | 다크/라이트 토글 (FR-U02) |
+| TanStack Query | ^5.102.8 | ✅ | **설치 완료(Phase 5).** 서버 상태 관리 |
+| next-themes | ^0.4.6 | ✅ | **설치 완료(Phase 5).** 다크/라이트 토글 (FR-U02) |
 | React Hook Form + Zod | — | ❌ Phase 6 | 폼 검증 |
 | Tiptap | — | ❌ Phase 7 | 리치 텍스트 에디터 (FR-T02) |
 | Framer Motion | — | ❌ Phase 7 | 상태 변화 애니메이션 (FR-U06) |
