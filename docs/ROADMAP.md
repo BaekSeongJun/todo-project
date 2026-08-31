@@ -155,6 +155,15 @@ M1 ─────────────────────────�
   - 에러 응답이 **평면 구조**(`timestamp`/`status`/`code`/`message`/`errors[]`)로 통일되고 스택트레이스를 노출하지 않음 (FR-U08, PRD 8.1)
   - **PRD 1.3 표의 jsoup 설치 상태 갱신**
 - **게이트:** 여기까지 통과하면 백엔드 핵심이 끝난다. Swagger로 전 API를 한 번 훑고 넘어갈 것
+- **현재 상태(2026-08-31 기준): 완료.**
+  - `TodoController`(`/api/todos` 6종: `GET`/`POST /api/todos`, `GET`/`PUT`/`DELETE /api/todos/{id}`, `PATCH /api/todos/{id}/toggle`)와 `TodoService`(생성·목록조회·단건조회·수정·토글·삭제)를 작성. 모든 단건 접근이 `private getOwnedTodo(userId, id)` 헬퍼(`findByIdAndUserId` 단일 쿼리)를 거쳐 존재하지 않음과 타인 소유를 구분 없이 `TodoNotFoundException`(404 `TODO_NOT_FOUND`)으로 통일(FR-T07)
+  - `common.response.PageResponse<T>`(`content`/`page`/`size`/`totalElements`/`totalPages`/`first`/`last`, `page` 0-base, `Page<T>.from()` 정적 팩토리) 신설. 목록 조회는 `page`(기본 0)·`size`(기본 10)·`status`(`all`/`pending`/`completed`, 기본 `all`)·`sort`(`createdAt`/`dueDate`, 기본 `createdAt desc`) 쿼리 파라미터를 받아 `TodoSortBy` 화이트리스트 2값(`CREATED_AT`/`DUE_DATE`)에 매핑, 그 외 값은 기본 정렬로 폴백(FR-L01~L04)
+  - `TodoRepository`에 `findByIdAndUserId`·`findAllByUserIdAndCompletedOptional`(`@Query`, `completed` null이면 전체) 추가. `@SQLRestriction("deleted_at IS NULL")`이 이미 Soft Delete 제외를 처리하므로 쿼리에 `deleted_at` 조건을 중복 명시하지 않음(FR-T06)
+  - `todo.util.HtmlSanitizer`(jsoup 1.18.3, `Safelist` 화이트리스트 방식)를 신설. 허용 태그는 FR-T02 툴바 8종(굵게·기울임·밑줄·취소선·목록·제목·인용·링크) + 구조 태그(`p`/`br`)로 한정, `img`는 화이트리스트 미포함으로 자동 제거, `a`는 `href` 속성만 허용하고 `addProtocols`로 `http`/`https`만 통과시켜 `javascript:` 스킴 차단, `on*` 이벤트 속성도 자동 제거, `preserveRelativeLinks()`는 호출하지 않아 기본값(false) 유지(FR-T03, PRD 1.3·2장 비목표)
+  - 단위·슬라이스 테스트 신설: `HtmlSanitizerTest`(7건, script/img/javascript:/on속성 제거·허용 태그 보존), `TodoTest`(3건, `toggle`/`update` 도메인 메서드), `TodoCreateRequestTest`(2건, Bean Validation), `TodoServiceTest`(9건, Mockito — 소유권 404 4건·정제 2건·토글·Soft Delete·필터 위임), `TodoRepositoryTest`(8건, `@DataJpaTest` + `@AutoConfigureTestDatabase(replace=Replace.NONE)` + `@ActiveProfiles("local")`로 로컬 PostgreSQL 실측 — 소유권 격리·Soft Delete 제외·completed 필터·`dueDate`/`createdAt` 정렬). `./mvnw test` 전체 44건 통과(Failures 0, Errors 0, Skipped 0)
+  - 로컬 서버를 실제로 기동해 통합 검증 완료: Swagger(`/v3/api-docs`)에 6개 엔드포인트 전부 노출, 토큰 없이 401, 실제 JWT로 생성(`<script>` 정제 확인)→조회→토글→수정(`<img onerror>` 제거 확인)→상태필터→삭제 전 과정이 `ApiResponse<T>` 형식으로 정상 동작, 삭제 후 재조회 404, 별도 계정으로 타인 소유 Todo 조회·삭제 시도 시 동일하게 404(403 아님)까지 실측 확인
+  - Spring Boot 4에서 `@DataJpaTest`(`org.springframework.boot.data.jpa.test.autoconfigure`)와 `@AutoConfigureTestDatabase`(`org.springframework.boot.jdbc.test.autoconfigure`)의 import 경로가 Boot 3과 달라졌음을 jar 내부 조사로 확인하고, 임베디드 DB 자동 교체를 막기 위해 `Replace.NONE`이 필수임을 실측(향후 Phase 9·10 Repository 슬라이스 테스트에도 동일 적용)
+  - `docs/PRD.md` 1.3 표의 jsoup 설치 상태를 1.18.3/✅로 갱신
 
 #### Phase 5 · 프론트 토대
 - **목표:** 화면을 만들기 전의 공통 기반
@@ -334,7 +343,7 @@ M1 ─────────────────────────�
 - [x] Phase 1 · 엔티티와 Repository (**DDL 전략 확정**)
 - [ ] Phase 2 · 인증 (**springdoc 설치 · 에러 코드 체계 확정**)
 - [x] Phase 3 · 구글 OAuth2
-- [ ] Phase 4 · Todo API (**jsoup 설치**)
+- [x] Phase 4 · Todo API (**jsoup 설치**)
 - [ ] Phase 5 · 프론트 토대 (**TanStack Query · next-themes 설치**)
 - [ ] Phase 6 · 인증 화면 (**React Hook Form · Zod 설치**)
 - [ ] Phase 7 · 할 일 화면 (**Tiptap · Framer Motion 설치**)
@@ -379,7 +388,7 @@ M1 ─────────────────────────�
 | 1 | | | |
 | 2 | | | |
 | 3 | | | 구글 OAuth2, 실제 계정 end-to-end 검증 완료 |
-| 4 | | | |
+| 4 | | | Todo API 6종 + jsoup 정제, 로컬 서버 통합 검증 완료 |
 | 5 | | | |
 | 6 | | | |
 | 7 | | | |
@@ -404,3 +413,4 @@ M1 ─────────────────────────�
 | 1.6 | 2026-08-28 | **Phase 0 완료 반영.** ① 백엔드 `application.properties`를 `application.yml`(공통)+`application-local.yml`(로컬, 커밋 금지)+`application-prod.yml`(운영) 프로파일 3분리로 전환 완료(Spring Boot 4.1.1 표준 프로파일 관례 적용, `./mvnw compile` 성공·`git check-ignore` 확인 완료) ② 루트 `README.md`(한글) 작성 완료 ③ `/tasks/000-sample.md` 작업 파일 규약 샘플 작성 완료 ④ Phase 0 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 0 항목 체크 |
 | 1.7 | 2026-08-28 | **Phase 1 완료 반영.** ① `BaseTimeEntity`/`BaseEntity` 2단 `@MappedSuperclass` 계층, `User`·`Todo` 엔티티, `UserRepository`·`TodoRepository`, `db/init.sql` 작성 완료(`PasswordResetToken`·`Attachment`는 Phase 9·10 산출물이므로 이번 범위 아님) ② `@SQLRestriction`을 `Todo`에만 개별 부여하고 `User`에는 적용하지 않음으로써 PRD 7장 조회 규칙 준수 ③ `./mvnw clean compile`·`spring-boot:run` 기동·`psql`을 통해 테이블 snake_case 컬럼·STRING enum·인덱스 4종(`uk_users_email` 포함) 생성을 실측 확인 ④ Phase 1 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 1 항목 체크 |
 | 1.8 | 2026-08-31 | **Phase 3 완료 반영.** ① `CustomOAuth2UserService`(email 기준 조회·생성, FR-A09)·`OneTimeCodeStore`(인메모리 TTL 저장소, FR-A08)·`OAuth2LoginSuccessHandler`(JWT를 URL에 노출하지 않고 일회용 코드만 전달)·`POST /api/auth/oauth/exchange`(코드→JWT 교환) 구현 완료, `SecurityConfig`에 `oauth2Login()` DSL 연결 ② 단위 테스트 4종(`OneTimeCodeStoreTest`·`CustomOAuth2UserServiceTest`·`OAuth2LoginSuccessHandlerTest`·`AuthServiceTest`) 작성, `./mvnw test` 전체 통과 ③ 실제 구글 계정으로 `/oauth2/authorization/google` 진입부터 `/api/auth/me` 호출·코드 재사용 차단까지 end-to-end 수동 검증 완료 ④ PRD 9.1에 `APP_OAUTH_REDIRECT_URL` 환경변수 신설 반영 ⑤ Phase 3 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 3 항목 체크, 7장 일정 표 비고 기록 |
+| 1.9 | 2026-08-31 | **Phase 4 완료 반영.** ① `TodoController`(API 6종)·`TodoService`(소유권 검증·HTML 정제·페이지네이션 통합)·`TodoRepository` 필터 메서드·`common.response.PageResponse<T>`·`common.exception.TodoNotFoundException`·`todo.util.HtmlSanitizer`(jsoup 1.18.3, `Safelist` 화이트리스트) 구현 완료 ② 타인 리소스 접근 시 존재 여부와 무관하게 단일 쿼리(`findByIdAndUserId`)로 404 통일(FR-T07), `@SQLRestriction`으로 Soft Delete 후 목록·단건 조회 모두 제외(FR-T06) 확인 ③ 상태 필터(`all`/`pending`/`completed`)·정렬(`createdAt`/`dueDate`, 화이트리스트 폴백)·`PageResponse<T>`(0-base) 응답 형식 확인(FR-L01~L04) ④ 단위·슬라이스 테스트 5개 클래스 신설(총 29건), `./mvnw test` 전체 44건 통과 ⑤ 로컬 서버 실기동으로 Swagger 6종 노출·401·전체 CRUD·타인 소유 404까지 통합 검증 완료 ⑥ Spring Boot 4의 `@DataJpaTest`/`@AutoConfigureTestDatabase` 패키지 이동과 `Replace.NONE` 필수 사실을 실측 확인(Phase 9·10 재사용 예정) ⑦ `docs/PRD.md` 1.3 표의 jsoup 설치 상태를 1.18.3/✅로 갱신 ⑧ Phase 4 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 4 항목 체크, 7장 일정 표 비고 기록, `/tasks/001-todo-api.md` 작업 파일 신설 |
