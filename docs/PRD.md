@@ -2,9 +2,9 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.4 |
+| 문서 버전 | 1.5 |
 | 작성일 | 2026-08-26 |
-| 최종 개정일 | 2026-08-28 |
+| 최종 개정일 | 2026-08-31 |
 | 상태 | 개발 착수 전 확정본 |
 | 관련 문서 | `ROADMAP.md`(실행 순서와 Phase 정의), `docs/guides/`(프론트 개발 가이드) |
 
@@ -435,6 +435,7 @@ DB 스키마 이름: **`todolist_db`** (테스트용: `todolist_db_test`)
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 클라이언트 | 리다이렉트 URI 재등록 필요 |
 | `APP_CORS_ALLOWED_ORIGINS` | 허용 출처 | 로컬 주소 → 운영 도메인 |
 | `APP_PASSWORD_RESET_URL` | 재설정 링크 베이스 URL | 로컬 주소 → 운영 도메인 |
+| `APP_OAUTH_REDIRECT_URL` | 구글 로그인 성공 후 프론트 콜백 베이스 URL | 로컬 http://localhost:3000/oauth/callback → 운영 도메인 (FR-A08) |
 | `APP_STORAGE_TYPE` | `local` \| `s3` | 구현체 전환 스위치 (FR-F03) |
 | `APP_UPLOAD_DIR` | 로컬 저장소의 파일 저장 루트 경로 | `local`일 때만 사용. S3 전환 후 미사용 |
 | `APP_S3_BUCKET` / `APP_S3_REGION` | S3 버킷명·리전 | `s3`일 때만 사용. 로컬에서는 미설정 |
@@ -565,3 +566,4 @@ DB 스키마 이름: **`todolist_db`** (테스트용: `todolist_db_test`)
 | 1.2 | 2026-08-27 | **기술 검증(prd-validator) 반영.** ① **1.3 표를 실물과 동기화** — 설치됨 4종(Lombok, OAuth2 Client, DevTools, shadcn 유틸) 추가, 미설치 3종(jsoup, starter-mail, AWS SDK s3) 추가, 양방향 동기화 의무 명시 ② **FR-A04-1 신설** — FR-M06(비활성 계정 토큰 차단)과 stateless JWT의 조정 방식 확정 ③ **FR-F05 재작성** — presigned URL을 `generateDownloadUrl(key, ttl)` 계약으로 추상화해 로컬/S3 양립 ④ **7장 조회 규칙에 `@SQLRestriction` 정책 명시** — ToOne 연관 `EntityNotFoundException` 회피, `users` 제외, FR-M07 DTO 프로젝션 ⑤ springdoc 3.1.0 이상으로 정정(근거 보강) ⑥ 11장 Phase 5에 React Query·next-themes 설치 명시 ⑦ 인덱스를 `(user_id, deleted_at, due_date)`로 교체 ⑧ FR-A08 일회용 코드 저장소(인메모리) 확정 ⑨ FR-T02 저장 형식(HTML) 명시 ⑩ FR-T07에 403/404 층위 구분 추가 ⑪ `attachments` `updated_at` 예외 명시 ⑫ 인수 기준 21~24 추가 (FR-L03/L04/L06, FR-U04, FR-U05, FR-A08 커버) |
 | 1.3 | 2026-08-27 | **재검증 회귀 수정.** ① **12장을 12.1(M1 게이트) / 12.2(M2 게이트) 소절로 분리** — ROADMAP이 번호 범위 대신 소절 이름으로 참조하게 해 항목 추가 시 게이트 정의가 어긋나는 문제를 구조적으로 차단. 신규 21~24는 Phase 7까지 구현이 끝나므로 12.1에 배치 ② 9장 성능의 `(user_id, deleted_at, *)` 축약을 7장과 동일하게 2개 인덱스로 전개 |
 | 1.4 | 2026-08-28 | **ROADMAP 검토에서 역으로 발견된 명세 공백 보정.** ① **8장에 첨부 다운로드 엔드포인트 `GET /api/attachments/{id}/download` 신설** — FR-F05가 "로컬 구현체는 자체 다운로드 엔드포인트 URL을 반환한다"고 규정했으나 8장에 그 경로가 없어, 구현자가 임의로 정해야 했고 저장소별로 프론트 코드가 갈릴 위험이 있었다. 저장소 무관 공통 경로로 확정하고, `download-url`과의 관계·인증 없이 동작하는 이유·실패 시 404를 표로 명시(9장 이식성 보강) ② **9.1에 파일 저장소 환경변수 4종 추가** — `APP_UPLOAD_DIR`(로컬 저장 루트), `APP_S3_BUCKET`/`APP_S3_REGION`, `APP_DOWNLOAD_URL_TTL_SECONDS`. FR-F03·FR-F05가 요구하는 값들의 주입 경로가 표에 없어 9장 이식성("소스에 하드코딩하지 않는다")을 만족할 수 없던 공백 보정 ③ **7장 `users`에 소셜 로그인 조회 키를 `email`로 명시** — FR-A09가 이메일 기준 계정 연결을 규정하므로 `provider_id`는 가입 경로 기록용이며 조회 키가 아님을 못박고, 별도 인덱스를 두지 않는 근거를 남김 ④ **12.2에 번호 배치 각주 추가** — 12.1에만 있던 설명을 12.2에도 붙여 14~20/21~24의 번호 구멍을 누락으로 오인하지 않게 함 ⑤ **1.3 "설치 상태" 열의 의미 명문화** — ✅는 의존성 선언 여부일 뿐 코드 사용 여부가 아님을 표 안내에 추가하고, jjwt 비고의 "의존성만 추가, 아직 미사용"을 설치 단계 불필요로 정정(✅와 "미사용"이 한 칸에 섞여 설치 단계 판단에 혼선을 주던 문제) |
+| 1.5 | 2026-08-28 | **APP_OAUTH_REDIRECT_URL 환경변수 신설** — Phase 3 구현 중 프론트 콜백 URL 관리 공백 발견 |

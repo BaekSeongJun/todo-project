@@ -2,8 +2,8 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.7 |
-| 기준 문서 | `PRD.md` v1.4 (SSOT) |
+| 문서 버전 | 1.8 |
+| 기준 문서 | `PRD.md` v1.5 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
 
@@ -131,6 +131,14 @@ M1 ─────────────────────────�
   - 동일 이메일 계정 중복 생성 없이 **기존 계정에 연결** — 조회 키는 **`email`이며 `provider_id`가 아니다**(PRD 7장 `users`). `provider`·`provider_id`는 가입 경로 기록용 (FR-A09)
   - 소셜 가입 시 이름은 제공자 프로필 이름, 없으면 이메일 로컬 파트 (FR-A01-1)
 - **주의:** 소셜 전용 계정은 `password`가 NULL이다 (PRD 7장 `users`). Phase 9의 FR-R03이 이 계정을 다룬다
+- **현재 상태(2026-08-31 기준): 완료.**
+  - `CustomOAuth2UserService`(`DefaultOAuth2UserService` 상속)가 구글 프로필의 email/name/sub를 추출해 `UserRepository.findByEmailAndDeletedAtIsNull`로 조회하고, 없으면 `provider=GOOGLE`·`role=USER`·`password=NULL`로 신규 생성(FR-A09). 이름이 없으면 이메일 로컬 파트를 사용(FR-A01-1)
+  - `OneTimeCodeStore`(`ConcurrentHashMap` 기반, 기본 TTL 90초)를 신설해 별도 테이블·Redis 없이 인메모리로 일회용 코드를 발급·소비. `consume()`은 `remove()`의 원자성으로 락 없이 1회성을 보장하며, 존재하지 않거나 만료된 코드는 `InvalidOAuthCodeException`(401 `INVALID_OAUTH_CODE`)
+  - `OAuth2LoginSuccessHandler`가 로그인 성공 시 JWT를 발급한 뒤 `OneTimeCodeStore`에 넣고, **JWT 자체가 아닌 일회용 코드만** `APP_OAUTH_REDIRECT_URL`(PRD 9.1 신규 환경변수) 쿼리 파라미터로 리다이렉트(FR-A08)
+  - `POST /api/auth/oauth/exchange`(`OAuthExchangeRequest` → `AuthService.exchangeCode`)가 코드를 JWT로 교환. `SecurityConfig`의 `oauth2Login()` DSL에 `userInfoEndpoint().userService(customOAuth2UserService)`·`successHandler(oAuth2LoginSuccessHandler)`를 연결하고 `PERMIT_ALL_PATHS`에 `/oauth2/**`·`/login/oauth2/**`·`/api/auth/oauth/exchange` 추가
+  - 단위 테스트 4종 신설: `OneTimeCodeStoreTest`(발급→소비, 재소비 예외, TTL 경과 예외, 존재하지 않는 코드 예외), `CustomOAuth2UserServiceTest`, `OAuth2LoginSuccessHandlerTest`, `AuthServiceTest`(이 프로젝트 최초의 AuthService 테스트)
+  - 실제 구글 계정으로 **end-to-end 수동 검증 완료**: `/oauth2/authorization/google` → 구글 로그인 → `{APP_OAUTH_REDIRECT_URL}?code=...` 리다이렉트(JWT 미노출 확인) → `/api/auth/oauth/exchange`로 JWT 교환 성공 → JWT로 `/api/auth/me` 호출 시 실제 구글 계정 정보 반환 → 동일 code 재사용 시 401 `INVALID_OAUTH_CODE` 확인
+  - `./mvnw test` 전체 통과. `docs/PRD.md` 9.1 표에 `APP_OAUTH_REDIRECT_URL` 행 추가
 
 #### Phase 4 · Todo API
 - **목표:** 백엔드 기능 완성
@@ -325,7 +333,7 @@ M1 ─────────────────────────�
 - [x] Phase 0 · 스캐폴딩 (**프로파일 분리 포함**)
 - [x] Phase 1 · 엔티티와 Repository (**DDL 전략 확정**)
 - [ ] Phase 2 · 인증 (**springdoc 설치 · 에러 코드 체계 확정**)
-- [ ] Phase 3 · 구글 OAuth2
+- [x] Phase 3 · 구글 OAuth2
 - [ ] Phase 4 · Todo API (**jsoup 설치**)
 - [ ] Phase 5 · 프론트 토대 (**TanStack Query · next-themes 설치**)
 - [ ] Phase 6 · 인증 화면 (**React Hook Form · Zod 설치**)
@@ -370,7 +378,7 @@ M1 ─────────────────────────�
 | 0 | | | 3저장소 초기 커밋 완료 |
 | 1 | | | |
 | 2 | | | |
-| 3 | | | |
+| 3 | | | 구글 OAuth2, 실제 계정 end-to-end 검증 완료 |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |
@@ -395,3 +403,4 @@ M1 ─────────────────────────�
 | 1.5 | 2026-08-28 | **저장소 구조 방침 전환.** 사용자가 루트/`todo-backend`/`todo-frontend` **3개 독립 git 저장소를 유지**하기로 명시적으로 확정함에 따라, v1.3에서 추가했던 "Phase 0에 저장소 통합" 요구를 철회. 진행 원칙 2, Phase 0(목표·산출물·완료조건·현재상태), 진행 체크리스트, 6장 형상 관리, 7장 일정 표를 3분할 전제로 수정. 3개 저장소 모두 초기 커밋 완료 반영(루트 1개, `todo-backend` 1개, `todo-frontend` 기존 1개 + 3개 추가) |
 | 1.6 | 2026-08-28 | **Phase 0 완료 반영.** ① 백엔드 `application.properties`를 `application.yml`(공통)+`application-local.yml`(로컬, 커밋 금지)+`application-prod.yml`(운영) 프로파일 3분리로 전환 완료(Spring Boot 4.1.1 표준 프로파일 관례 적용, `./mvnw compile` 성공·`git check-ignore` 확인 완료) ② 루트 `README.md`(한글) 작성 완료 ③ `/tasks/000-sample.md` 작업 파일 규약 샘플 작성 완료 ④ Phase 0 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 0 항목 체크 |
 | 1.7 | 2026-08-28 | **Phase 1 완료 반영.** ① `BaseTimeEntity`/`BaseEntity` 2단 `@MappedSuperclass` 계층, `User`·`Todo` 엔티티, `UserRepository`·`TodoRepository`, `db/init.sql` 작성 완료(`PasswordResetToken`·`Attachment`는 Phase 9·10 산출물이므로 이번 범위 아님) ② `@SQLRestriction`을 `Todo`에만 개별 부여하고 `User`에는 적용하지 않음으로써 PRD 7장 조회 규칙 준수 ③ `./mvnw clean compile`·`spring-boot:run` 기동·`psql`을 통해 테이블 snake_case 컬럼·STRING enum·인덱스 4종(`uk_users_email` 포함) 생성을 실측 확인 ④ Phase 1 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 1 항목 체크 |
+| 1.8 | 2026-08-31 | **Phase 3 완료 반영.** ① `CustomOAuth2UserService`(email 기준 조회·생성, FR-A09)·`OneTimeCodeStore`(인메모리 TTL 저장소, FR-A08)·`OAuth2LoginSuccessHandler`(JWT를 URL에 노출하지 않고 일회용 코드만 전달)·`POST /api/auth/oauth/exchange`(코드→JWT 교환) 구현 완료, `SecurityConfig`에 `oauth2Login()` DSL 연결 ② 단위 테스트 4종(`OneTimeCodeStoreTest`·`CustomOAuth2UserServiceTest`·`OAuth2LoginSuccessHandlerTest`·`AuthServiceTest`) 작성, `./mvnw test` 전체 통과 ③ 실제 구글 계정으로 `/oauth2/authorization/google` 진입부터 `/api/auth/me` 호출·코드 재사용 차단까지 end-to-end 수동 검증 완료 ④ PRD 9.1에 `APP_OAUTH_REDIRECT_URL` 환경변수 신설 반영 ⑤ Phase 3 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 3 항목 체크, 7장 일정 표 비고 기록 |
