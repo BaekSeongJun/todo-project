@@ -68,7 +68,7 @@
 | ESLint / Prettier / husky / lint-staged / commitlint | — | ✅ | 코드 품질 도구 |
 | TanStack Query | ^5.102.8 | ✅ | **설치 완료(Phase 5).** 서버 상태 관리 |
 | next-themes | ^0.4.6 | ✅ | **설치 완료(Phase 5).** 다크/라이트 토글 (FR-U02) |
-| React Hook Form + Zod | — | ❌ Phase 6 | 폼 검증 |
+| React Hook Form + Zod | ^7.87.0 · ^4.5.4 | ✅ | **설치 완료(Phase 6).** 폼 검증. `@hookform/resolvers`(^5.9.1) 포함 |
 | Tiptap | — | ❌ Phase 7 | 리치 텍스트 에디터 (FR-T02) |
 | Framer Motion | — | ❌ Phase 7 | 상태 변화 애니메이션 (FR-U06) |
 
