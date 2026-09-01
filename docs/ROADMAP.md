@@ -226,19 +226,19 @@ M1 ─────────────────────────�
   - [x] **PRD 1.3 표의 Tiptap·Framer Motion 설치 상태 갱신**
 - **리스크:** 낙관적 업데이트의 쿼리 키. 필터·정렬·페이지를 키에 포함하지 않으면 목록이 어긋난다 (PRD 13장) — `todoKeys.list(params)`에 4개 필드 모두 포함해 대응 완료
 
-#### Phase 8 · 통합테스트와 로컬 검증
+#### Phase 8 · 통합테스트와 로컬 검증 — ✅ 완료 (2026-09-01)
 - **목표:** 핵심 기능의 회귀 방지선 확보
 - **선행:** Phase 7
 - **커버:** PRD **12.1 M1 게이트 인수 기준** 전부 / 비기능 — 테스트
 - **산출물:**
-  - `todolist_db_test` 스키마 (**로컬 PostgreSQL 직접 사용, Docker/Testcontainers 금지** — PRD 1.3 금지 사항)
-  - 백엔드 통합테스트 — 가입/로그인·보호 API 401·Todo CRUD+페이지네이션·Soft Delete 제외·타인 리소스 404·HTML 정제·OAuth 코드 재사용 실패
-  - 백엔드 검증 결과표
-  - **프론트 로컬 검증 체크리스트** — 필터·정렬 갱신, 로딩/빈/에러 상태 UI, 낙관적 롤백, 다크/라이트 토글, 반응형
-- **완료 조건:** 전체 테스트 통과 · PRD **12.1** 전부 통과
-  - 12.1의 1~9·12~13·24는 **백엔드 통합테스트**로 검증
-  - 12.1의 3·10~11·21~23은 **로컬 검증 체크리스트**로 확인 (**프론트 자동화 테스트는 PRD 9장 기준 범위 밖 — E2E 도구를 새로 도입하지 않는다**)
-- **🚩 M1 게이트:** 여기서 한 번 멈추고 실제로 써본다. UX 문제는 확장 기능 전에 고치는 편이 싸다
+  - `todolist_db_test` 스키마 (**로컬 PostgreSQL 직접 사용, Docker/Testcontainers 금지** — PRD 1.3 금지 사항) — `src/test/resources/application-test.yml`
+  - 백엔드 통합테스트 — 가입/로그인·보호 API 401·Todo CRUD+페이지네이션·Soft Delete 제외·타인 리소스 404·HTML 정제·OAuth 코드 재사용 실패 — `AuthControllerIntegrationTest`·`TodoControllerIntegrationTest`·`OAuthExchangeIntegrationTest` 신설(9개 테스트)
+  - 백엔드 검증 결과표 — `docs/phase8-verification.md`
+  - **프론트 로컬 검증 체크리스트** — 필터·정렬 갱신, 로딩/빈/에러 상태 UI, 낙관적 롤백, 다크/라이트 토글, 반응형 — `docs/phase8-verification.md` 2절
+- **완료 조건(전항목 실측·자동테스트 확인, 2026-09-01):** 전체 테스트 통과 · PRD **12.1** 전부 통과
+  - [x] 12.1의 1~9·12~13·24는 **백엔드 통합테스트**로 검증 — 전체 53개 테스트 `./mvnw test` BUILD SUCCESS, 항목별 근거는 `docs/phase8-verification.md` 1절
+  - [x] 12.1의 3·10~11·21~23은 **로컬 검증 체크리스트**로 확인 (**프론트 자동화 테스트는 PRD 9장 기준 범위 밖 — E2E 도구를 새로 도입하지 않는다**) — `npm run build` 8개 라우트 정적 생성 성공(#3), 10·11·21~23은 Phase 7 Playwright MCP 실측 근거 인용, `docs/phase8-verification.md` 2절
+- **🚩 M1 게이트 통과:** PRD 12.1 M1 게이트 17개 항목(1~13, 21~24) 전부 근거 확보 완료. 다음 Phase(9~11)로 자동 진행하지 않고 여기서 멈춰 실제로 써본다 — UX 문제는 확장 기능 전에 고치는 편이 싸다
 
 ---
 
