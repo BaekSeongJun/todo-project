@@ -50,7 +50,7 @@
 | Spring Boot DevTools | Boot 4 BOM | ✅ | 로컬 전용(optional). 운영 빌드에 포함하지 않는다 |
 | springdoc-openapi | 3.1.0 | ✅ | **설치 완료(Phase 2).** Maven Central에서 3.1.0 확인 후 설치. 로컬 기동 시 Swagger UI 정상 표시, prod 프로파일에서는 비활성화(404) 확인 완료 |
 | jsoup | 1.18.3 | ✅ | **설치 완료(Phase 4).** Maven Central에서 1.18.3 확인 후 설치. HTML 정제 (FR-T03). `Safelist`는 FR-T02 툴바 8종으로 한정. **`preserveRelativeLinks` 활성화 금지**(`javascript:` 우회 취약점) 준수 확인 |
-| spring-boot-starter-mail | Boot 4 BOM | ❌ Phase 9 | 메일 발송 (FR-R01). 로컬은 로그 출력 구현체 사용 |
+| spring-boot-starter-mail | Boot 4 BOM | ✅ | **설치 완료(Phase 9).** 메일 발송 (FR-R01). 로컬은 로그 출력 구현체(`LogMailSender`) 사용, `app.mail-type` 환경변수로 전환 |
 | AWS SDK v2 (`s3`) | 2.x | ❌ Phase 12 | S3 저장소·presigned URL (FR-F03, FR-F05) |
 
 #### 프론트엔드

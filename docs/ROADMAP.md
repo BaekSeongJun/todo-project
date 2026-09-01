@@ -363,7 +363,7 @@ M1 ─────────────────────────�
 - [ ] Phase 8 · 통합테스트 · **M1 게이트 (PRD 12.1)**
 
 **M2 — 확장 기능**
-- [ ] Phase 9 · 비밀번호 재설정 (**spring-boot-starter-mail 설치**)
+- [x] Phase 9 · 비밀번호 재설정 (**spring-boot-starter-mail 설치**)
 - [ ] Phase 10 · 파일 첨부
 - [ ] Phase 11 · 관리자 페이지 · **M2 게이트 (PRD 12.1 + 12.2, 24개)**
 - [ ] OPEN-01~04 결정 (Phase 11 종료 시점)
