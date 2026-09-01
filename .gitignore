@@ -2,3 +2,4 @@ todo-frontend/
 todo-backend/
 .claude/
 shrimp_data/
+.playwright-mcp/

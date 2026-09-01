@@ -209,22 +209,22 @@ M1 ─────────────────────────�
   - `/oauth/callback`이 **JWT가 아닌 일회용 코드**를 받아 교환 API를 호출하고, 실패 시 로그인으로 이동 (FR-A08)
   - **PRD 1.3 표의 React Hook Form·Zod 설치 상태 갱신**
 
-#### Phase 7 · 할 일 화면
+#### Phase 7 · 할 일 화면 — ✅ 완료 (2026-09-01)
 - **목표:** 메인 기능 완성
 - **선행:** Phase 6
 - **커버:** FR-T01 ~ FR-T05, FR-L03 ~ FR-L06, FR-U04 ~ FR-U07
-- **설치:** **Tiptap, Framer Motion** (PRD 1.3 ❌ → 설치 후 표 갱신)
-- **산출물:** `/todos`, 생성·수정 다이얼로그, `TiptapEditor`, React Query 훅(`hooks/useTodos.ts`), 낙관적 업데이트
-- **완료 조건:**
-  - 제목(1~200자)·내용·마감일·우선순위(기본 MEDIUM) 입력과 CRUD 동작 (FR-T01, FR-T04)
-  - Tiptap 툴바가 **8종(굵게·기울임·밑줄·취소선·목록·제목·인용·링크)으로 제한**되고 **이미지 버튼 없음**, 저장은 `editor.getHTML()` **HTML 문자열** (FR-T02, PRD 2장 비목표)
-  - 토글이 **즉시 반영되고 실패 시 롤백 + 에러 토스트** (FR-T05, FR-U05)
-  - 로딩(스켈레톤)·빈 상태·에러 상태 UI가 모두 존재 (FR-U04)
-  - 필터·정렬·페이지 동시 동작, **필터 변경 시 첫 페이지로 이동** (FR-L06)
-  - 모바일 1열 카드형 / 데스크톱 리스트형, 레이아웃 깨짐 없음 (FR-U07)
-  - 애니메이션은 목록 진입·삭제·완료 토글 등 상태 변화에만 절제 사용 (FR-U06)
-  - **PRD 1.3 표의 Tiptap·Framer Motion 설치 상태 갱신**
-- **리스크:** 낙관적 업데이트의 쿼리 키. 필터·정렬·페이지를 키에 포함하지 않으면 목록이 어긋난다 (PRD 13장)
+- **설치:** **Tiptap(^3.30.6), Framer Motion(^13.1.1), sonner(^2.0.8)** — 설치 완료, PRD 1.3 표 갱신 완료
+- **산출물:** `/todos`, `TodoListContainer`, 생성·수정 다이얼로그(`TodoFormDialog`), `TiptapEditor`, `TodoCard`·`TodoList`·`TodoFilterBar`·`TodoSortSelect`, React Query 훅(`hooks/useTodos.ts`), 낙관적 업데이트
+- **완료 조건(전항목 Playwright MCP 실측 확인, 2026-09-01):**
+  - [x] 제목(1~200자)·내용·마감일·우선순위(기본 MEDIUM) 입력과 CRUD 동작 (FR-T01, FR-T04) — 생성·수정·삭제 전부 실측
+  - [x] Tiptap 툴바가 **8종(굵게·기울임·밑줄·취소선·목록·제목·인용·링크)으로 제한**되고 **이미지 버튼 없음**, 저장은 `editor.getHTML()` **HTML 문자열** (FR-T02, PRD 2장 비목표) — 접근성 스냅샷으로 8개 버튼 확인
+  - [x] 토글이 **즉시 반영되고 실패 시 롤백 + 에러 토스트** (FR-T05, FR-U05) — `window.fetch` 강제 실패로 재현, "다시 시도" 후 서버 상태로 정확히 복원됨을 확인
+  - [x] 로딩(스켈레톤)·빈 상태·에러 상태 UI가 모두 존재 (FR-U04) — EmptyState·ErrorState 실측
+  - [x] 필터·정렬·페이지 동시 동작, **필터 변경 시 첫 페이지로 이동** (FR-L06) — 2페이지에서 필터 전환 시 1페이지로 리셋됨을 실측
+  - [x] 모바일 1열 카드형 / 데스크톱 리스트형, 레이아웃 깨짐 없음 (FR-U07) — 390px·1280px 스크린샷 확인
+  - [x] 애니메이션은 목록 진입·삭제·완료 토글 등 상태 변화에만 절제 사용 (FR-U06) — `AnimatePresence`/`motion` 사용이 `TodoList.tsx`에만 한정됨을 코드로 확인
+  - [x] **PRD 1.3 표의 Tiptap·Framer Motion 설치 상태 갱신**
+- **리스크:** 낙관적 업데이트의 쿼리 키. 필터·정렬·페이지를 키에 포함하지 않으면 목록이 어긋난다 (PRD 13장) — `todoKeys.list(params)`에 4개 필드 모두 포함해 대응 완료
 
 #### Phase 8 · 통합테스트와 로컬 검증
 - **목표:** 핵심 기능의 회귀 방지선 확보
@@ -359,7 +359,7 @@ M1 ─────────────────────────�
 - [x] Phase 4 · Todo API (**jsoup 설치**)
 - [x] Phase 5 · 프론트 토대 (**TanStack Query · next-themes 설치**)
 - [ ] Phase 6 · 인증 화면 (**React Hook Form · Zod 설치**)
-- [ ] Phase 7 · 할 일 화면 (**Tiptap · Framer Motion 설치**)
+- [x] Phase 7 · 할 일 화면 (**Tiptap · Framer Motion 설치**)
 - [ ] Phase 8 · 통합테스트 · **M1 게이트 (PRD 12.1)**
 
 **M2 — 확장 기능**

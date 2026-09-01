@@ -69,8 +69,9 @@
 | TanStack Query | ^5.102.8 | ✅ | **설치 완료(Phase 5).** 서버 상태 관리 |
 | next-themes | ^0.4.6 | ✅ | **설치 완료(Phase 5).** 다크/라이트 토글 (FR-U02) |
 | React Hook Form + Zod | ^7.87.0 · ^4.5.4 | ✅ | **설치 완료(Phase 6).** 폼 검증. `@hookform/resolvers`(^5.9.1) 포함 |
-| Tiptap | — | ❌ Phase 7 | 리치 텍스트 에디터 (FR-T02) |
-| Framer Motion | — | ❌ Phase 7 | 상태 변화 애니메이션 (FR-U06) |
+| Tiptap | ^3.30.6 | ✅ | **설치 완료(Phase 7).** 리치 텍스트 에디터 (FR-T02). `@tiptap/react`·`@tiptap/pm`·`@tiptap/starter-kit`. v3 StarterKit에 Link·Underline이 기본 포함되어 별도 확장 패키지는 설치하지 않음 |
+| Framer Motion | ^13.1.1 | ✅ | **설치 완료(Phase 7).** 상태 변화 애니메이션 (FR-U06) |
+| sonner | ^2.0.8 | ✅ | **설치 완료(Phase 7).** 토스트 알림 (FR-U05). shadcn `add sonner`로 설치, `app/layout.tsx`에 `Toaster` 배치 |
 
 #### 데이터베이스 · 인프라
 
