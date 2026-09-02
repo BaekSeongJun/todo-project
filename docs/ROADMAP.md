@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.10 |
+| 문서 버전 | 1.11 |
 | 기준 문서 | `PRD.md` v1.5 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
@@ -364,7 +364,7 @@ M1 ─────────────────────────�
 
 **M2 — 확장 기능**
 - [x] Phase 9 · 비밀번호 재설정 (**spring-boot-starter-mail 설치**)
-- [ ] Phase 10 · 파일 첨부
+- [x] Phase 10 · 파일 첨부
 - [ ] Phase 11 · 관리자 페이지 · **M2 게이트 (PRD 12.1 + 12.2, 24개)**
 - [ ] OPEN-01~04 결정 (Phase 11 종료 시점)
 
@@ -407,7 +407,7 @@ M1 ─────────────────────────�
 | 7 | | | |
 | 8 | | | M1 게이트 |
 | 9 | | | |
-| 10 | | | |
+| 10 | | | 첨부 API 5종·서명 다운로드 URL·업로드 UI, 백엔드 82건·프론트 검증 통과 |
 | 11 | | | M2 게이트 · OPEN 결정 |
 | 12 | | | |
 
@@ -428,3 +428,4 @@ M1 ─────────────────────────�
 | 1.8 | 2026-08-31 | **Phase 3 완료 반영.** ① `CustomOAuth2UserService`(email 기준 조회·생성, FR-A09)·`OneTimeCodeStore`(인메모리 TTL 저장소, FR-A08)·`OAuth2LoginSuccessHandler`(JWT를 URL에 노출하지 않고 일회용 코드만 전달)·`POST /api/auth/oauth/exchange`(코드→JWT 교환) 구현 완료, `SecurityConfig`에 `oauth2Login()` DSL 연결 ② 단위 테스트 4종(`OneTimeCodeStoreTest`·`CustomOAuth2UserServiceTest`·`OAuth2LoginSuccessHandlerTest`·`AuthServiceTest`) 작성, `./mvnw test` 전체 통과 ③ 실제 구글 계정으로 `/oauth2/authorization/google` 진입부터 `/api/auth/me` 호출·코드 재사용 차단까지 end-to-end 수동 검증 완료 ④ PRD 9.1에 `APP_OAUTH_REDIRECT_URL` 환경변수 신설 반영 ⑤ Phase 3 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 3 항목 체크, 7장 일정 표 비고 기록 |
 | 1.9 | 2026-08-31 | **Phase 4 완료 반영.** ① `TodoController`(API 6종)·`TodoService`(소유권 검증·HTML 정제·페이지네이션 통합)·`TodoRepository` 필터 메서드·`common.response.PageResponse<T>`·`common.exception.TodoNotFoundException`·`todo.util.HtmlSanitizer`(jsoup 1.18.3, `Safelist` 화이트리스트) 구현 완료 ② 타인 리소스 접근 시 존재 여부와 무관하게 단일 쿼리(`findByIdAndUserId`)로 404 통일(FR-T07), `@SQLRestriction`으로 Soft Delete 후 목록·단건 조회 모두 제외(FR-T06) 확인 ③ 상태 필터(`all`/`pending`/`completed`)·정렬(`createdAt`/`dueDate`, 화이트리스트 폴백)·`PageResponse<T>`(0-base) 응답 형식 확인(FR-L01~L04) ④ 단위·슬라이스 테스트 5개 클래스 신설(총 29건), `./mvnw test` 전체 44건 통과 ⑤ 로컬 서버 실기동으로 Swagger 6종 노출·401·전체 CRUD·타인 소유 404까지 통합 검증 완료 ⑥ Spring Boot 4의 `@DataJpaTest`/`@AutoConfigureTestDatabase` 패키지 이동과 `Replace.NONE` 필수 사실을 실측 확인(Phase 9·10 재사용 예정) ⑦ `docs/PRD.md` 1.3 표의 jsoup 설치 상태를 1.18.3/✅로 갱신 ⑧ Phase 4 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 4 항목 체크, 7장 일정 표 비고 기록, `/tasks/001-todo-api.md` 작업 파일 신설 |
 | 1.10 | 2026-08-31 | **Phase 5 완료 반영.** ① `@tanstack/react-query`(^5.102.8)·`next-themes`(^0.4.6) 설치, `next.config.ts`에 `typedRoutes: true` 선제 적용 ② `types/api.ts`(백엔드 `ErrorResponse` record와 필드 일치)·`lib/auth/token.ts`(Phase 6 정식 완성 전 최소 버전)·`lib/api/client.ts`(`fetchApi<T>` + `ApiError`, 401 시 `CustomEvent` 발행으로 Phase 6에 리다이렉트 위임) 작성 ③ `providers/QueryProvider.tsx`(`useState` 기반 SSR-safe 인스턴스)·`providers/ThemeProvider.tsx`(`defaultTheme="dark"` + `enableSystem={false}`로 시스템 감지 아닌 다크 고정 기본값)를 `app/layout.tsx`에 마운트, `suppressHydrationWarning` 추가 ④ `components/common/`에 `Pagination`(0-base 유지, 표시 직전에만 1-base 변환)·`EmptyState`·`ErrorState`·`Skeleton`·`Header`·`ThemeToggle` 6종 작성 ⑤ next-themes 공식 `mounted` state 예시가 `eslint-config-next` 16.3.3의 `react-hooks/set-state-in-effect` 규칙과 충돌하는 것을 실측하고 `resolvedTheme` 기반으로 대체 ⑥ `.env.local.example` 신설, `.gitignore`에 `!.env*.example` 예외 패턴 추가 ⑦ `npm run typecheck`·`lint`·`format:check`·`build` 전체 통과, Playwright로 다크 모드 기본 적용·콘솔 에러 0건 실측 확인 ⑧ `docs/PRD.md` 1.3 표의 TanStack Query·next-themes 설치 상태 갱신 ⑨ Phase 5 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 5 항목 체크, 7장 일정 표 비고 기록 |
+| 1.11 | 2026-09-02 | **Phase 10 완료 반영.** ① `Attachment` 엔티티(`BaseEntity` 미상속, `PasswordResetToken`처럼 `created_at`·`deleted_at`만 직접 선언, `@SQLRestriction`)·`AttachmentRepository`(N+1 회피용 배치 카운트 `countByTodoIdIn` 포함) 작성 ② `FileStorage` 인터페이스(`store`/`generateDownloadUrl`/`load`) + `LocalFileStorage`(`@ConditionalOnProperty(app.storage-type)`, `MailSender` 전략 패턴과 동일)·`AttachmentTokenProvider`(기존 `JWT_SECRET`으로 서명하는 별도 jjwt 발급·검증 클래스, FR-F05) 구현 ③ `AttachmentService`: 모든 메서드가 `findByIdAndUserId`로 Todo 소유권을 먼저 검증한 뒤에만 Attachment를 다뤄 Soft Delete된 Todo에 대한 `EntityNotFoundException` 위험을 원천 차단, FR-F01(5개·10MB)·FR-F02(9종 확장자+Content-Type 화이트리스트)·FR-F04(UUID 키)·FR-F06(Soft Delete) 구현 ④ `AttachmentController`(업로드·목록·download-url 발급·download·삭제 5종), `TodoResponse.attachmentCount`(카운트 서브쿼리), `SecurityConfig.PERMIT_ALL_PATHS`에 `/api/attachments/*/download` 추가 ⑤ 신규 통합테스트 `AttachmentControllerIntegrationTest`(8건: 용량·형식·개수 제한 400, 타인 Todo/첨부 404, 정상 업로드~다운로드 흐름, 위조 토큰 404, 삭제 후 목록 제외, PRD 12.2 항목 16·17) 작성, `./mvnw test` 전체 82건 통과 ⑥ 프론트 `lib/api/attachments.ts`(`uploadAttachment`만 `fetchApi`를 거치지 않는 별도 `fetch` 함수로 분리 — `FormData` 업로드는 브라우저가 `boundary` 포함 `Content-Type`을 자동 설정해야 하므로 JSON 전용 계약과 공존 불가)·`hooks/useAttachments.ts`(`useTodos.ts` 패턴, 업로드·삭제 성공 시 첨부 목록과 `todoKeys.lists()`를 함께 invalidate) 작성 ⑦ `AttachmentUploader`(드래그앤드롭+클릭 업로드)·`AttachmentList`(이미지 썸네일은 `download-url`을 먼저 발급받아 `img src`로 사용, 파일 크기 포맷 `formatFileSize` 신설) 작성, `TodoFormDialog`는 edit 모드에서만·`TodoDetailDialog`는 항상 노출, `TodoCard`에 클립 아이콘+개수 배지(FR-F08) 추가 ⑧ `npm run validate` 전체 통과, 실제 백엔드·프론트 서버를 기동해 Playwright로 업로드→썸네일→배지 반영→다운로드→삭제 전체 흐름과 업로드 요청의 `Content-Type: multipart/form-data; boundary=...` 자동 설정을 브라우저에서 실측 확인 ⑨ `S3FileStorage`는 미생성 상태로 Phase 12-3에 위임됨을 재확인, `MultipartFile`(webmvc 내장)·`UUID`(JDK 내장)·jjwt(기존 설치)로 신규 라이브러리 설치가 없어 PRD 1.3 표 변경 불필요, PRD 9.1의 `APP_STORAGE_TYPE`·`APP_UPLOAD_DIR`·`APP_DOWNLOAD_URL_TTL_SECONDS`가 실제 코드에서 사용됨을 확인 ⑩ 5장 체크리스트에서 Phase 10 항목 체크, 7장 일정 표 비고 기록 |
