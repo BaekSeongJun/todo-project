@@ -51,7 +51,7 @@
 | springdoc-openapi | 3.1.0 | ✅ | **설치 완료(Phase 2).** Maven Central에서 3.1.0 확인 후 설치. 로컬 기동 시 Swagger UI 정상 표시, prod 프로파일에서는 비활성화(404) 확인 완료 |
 | jsoup | 1.18.3 | ✅ | **설치 완료(Phase 4).** Maven Central에서 1.18.3 확인 후 설치. HTML 정제 (FR-T03). `Safelist`는 FR-T02 툴바 8종으로 한정. **`preserveRelativeLinks` 활성화 금지**(`javascript:` 우회 취약점) 준수 확인 |
 | spring-boot-starter-mail | Boot 4 BOM | ✅ | **설치 완료(Phase 9).** 메일 발송 (FR-R01). 로컬은 로그 출력 구현체(`LogMailSender`) 사용, `app.mail-type` 환경변수로 전환 |
-| AWS SDK v2 (`s3`) | 2.x | ❌ Phase 12 | S3 저장소·presigned URL (FR-F03, FR-F05) |
+| AWS SDK v2 (`s3`) | 2.54.12 | ✅ | **설치 완료(Phase 12-3 조기 착수).** S3 저장소·presigned URL (FR-F03, FR-F05). `S3Presigner`는 별도 아티팩트가 아니라 `s3` 모듈에 포함되어 있어 `s3` 하나만 추가하면 됨(`s3-presigner`라는 별도 아티팩트는 존재하지 않음) |
 
 #### 프론트엔드
 
@@ -440,6 +440,7 @@ DB 스키마 이름: **`todolist_db`** (테스트용: `todolist_db_test`)
 | `APP_STORAGE_TYPE` | `local` \| `s3` | 구현체 전환 스위치 (FR-F03) |
 | `APP_UPLOAD_DIR` | 로컬 저장소의 파일 저장 루트 경로 | `local`일 때만 사용. S3 전환 후 미사용 |
 | `APP_S3_BUCKET` / `APP_S3_REGION` | S3 버킷명·리전 | `s3`일 때만 사용. 로컬에서는 미설정 |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | S3 접근용 AWS 자격증명. `StaticCredentialsProvider`로 명시 주입 | `s3`일 때만 사용. SDK 기본 자격증명 체인(환경변수 자동 탐색·`~/.aws/credentials` 등)은 쓰지 않고 이 두 값만 Spring이 읽는다 |
 | `APP_DOWNLOAD_URL_TTL_SECONDS` | 다운로드 URL 만료 시간(초) | 로컬·S3 공통 (FR-F05) |
 | `APP_MAIL_TYPE` | `log` \| `ses` | 구현체 전환 스위치 (FR-R01) |
 | `NEXT_PUBLIC_API_BASE_URL` | 프론트가 호출할 API 주소 | 로컬 주소 → 운영 도메인 |
@@ -568,3 +569,4 @@ DB 스키마 이름: **`todolist_db`** (테스트용: `todolist_db_test`)
 | 1.3 | 2026-08-27 | **재검증 회귀 수정.** ① **12장을 12.1(M1 게이트) / 12.2(M2 게이트) 소절로 분리** — ROADMAP이 번호 범위 대신 소절 이름으로 참조하게 해 항목 추가 시 게이트 정의가 어긋나는 문제를 구조적으로 차단. 신규 21~24는 Phase 7까지 구현이 끝나므로 12.1에 배치 ② 9장 성능의 `(user_id, deleted_at, *)` 축약을 7장과 동일하게 2개 인덱스로 전개 |
 | 1.4 | 2026-08-28 | **ROADMAP 검토에서 역으로 발견된 명세 공백 보정.** ① **8장에 첨부 다운로드 엔드포인트 `GET /api/attachments/{id}/download` 신설** — FR-F05가 "로컬 구현체는 자체 다운로드 엔드포인트 URL을 반환한다"고 규정했으나 8장에 그 경로가 없어, 구현자가 임의로 정해야 했고 저장소별로 프론트 코드가 갈릴 위험이 있었다. 저장소 무관 공통 경로로 확정하고, `download-url`과의 관계·인증 없이 동작하는 이유·실패 시 404를 표로 명시(9장 이식성 보강) ② **9.1에 파일 저장소 환경변수 4종 추가** — `APP_UPLOAD_DIR`(로컬 저장 루트), `APP_S3_BUCKET`/`APP_S3_REGION`, `APP_DOWNLOAD_URL_TTL_SECONDS`. FR-F03·FR-F05가 요구하는 값들의 주입 경로가 표에 없어 9장 이식성("소스에 하드코딩하지 않는다")을 만족할 수 없던 공백 보정 ③ **7장 `users`에 소셜 로그인 조회 키를 `email`로 명시** — FR-A09가 이메일 기준 계정 연결을 규정하므로 `provider_id`는 가입 경로 기록용이며 조회 키가 아님을 못박고, 별도 인덱스를 두지 않는 근거를 남김 ④ **12.2에 번호 배치 각주 추가** — 12.1에만 있던 설명을 12.2에도 붙여 14~20/21~24의 번호 구멍을 누락으로 오인하지 않게 함 ⑤ **1.3 "설치 상태" 열의 의미 명문화** — ✅는 의존성 선언 여부일 뿐 코드 사용 여부가 아님을 표 안내에 추가하고, jjwt 비고의 "의존성만 추가, 아직 미사용"을 설치 단계 불필요로 정정(✅와 "미사용"이 한 칸에 섞여 설치 단계 판단에 혼선을 주던 문제) |
 | 1.5 | 2026-08-28 | **APP_OAUTH_REDIRECT_URL 환경변수 신설** — Phase 3 구현 중 프론트 콜백 URL 관리 공백 발견 |
+| 1.6 | 2026-09-04 | **S3FileStorage 도입(Phase 12-3 조기 착수) 반영.** ① **1.3 표** — AWS SDK v2(`s3`) 설치 상태를 ❌→✅로 갱신. `S3Presigner`가 별도 아티팩트(`s3-presigner`)가 아니라 `s3` 모듈에 포함되어 있음을 구현 중 확인해 비고 정정 ② **9.1 표**에 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` 환경변수 신설 — `StaticCredentialsProvider`로 명시 주입하며 SDK 기본 자격증명 체인을 쓰지 않는다는 설계 결정을 명문화 |

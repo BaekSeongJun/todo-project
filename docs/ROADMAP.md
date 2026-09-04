@@ -2,8 +2,8 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 1.11 |
-| 기준 문서 | `PRD.md` v1.5 (SSOT) |
+| 문서 버전 | 1.13 |
+| 기준 문서 | `PRD.md` v1.6 (SSOT) |
 | 관련 문서 | `docs/guides/` (프론트 구현 패턴) |
 | 개발 방식 | Claude Code 바이브 코딩, 로컬 개발 후 AWS 이전 |
 
@@ -302,6 +302,7 @@ M1 ─────────────────────────�
 - **리스크:** 권한 검사가 프론트 가드에만 걸리는 실수. **프론트 가드는 보안 수단으로 인정하지 않으며** 통합테스트로 403/401을 반드시 확인 (FR-M02, PRD 13장)
 - **🚩 M2 게이트:** PRD **12.1 + 12.2 인수 기준 전부(24개)** 통과. M1에서 통과한 항목도 확장 기능 추가로 깨지지 않았는지 재확인한다
 - **결정 과제:** 여기서 **OPEN-01~04를 모두 결정**한다 (PRD 14장). **Amplify의 Next.js 16 지원 여부를 공식 문서로 확인**해 OPEN-01을 정하며, 미결정 상태로는 Phase 12에 착수하지 않는다
+- **현재 상태(완료, 사후 확인 2026-09-04):** 백엔드 `com.example.admin` 패키지(Controller·Service·DTO 4종·예외 2종)와 `AdminControllerIntegrationTest`(8건)가 커밋 `98b5e71`(2026-09-02)로, 프론트 `app/admin/` 라우트·관련 컴포넌트가 커밋 `6540a55`(같은 날짜)로 이미 완료돼 있었다. 문서 갱신만 뒤따르지 못했던 상태였다. **OPEN-01~04 결정은 여전히 미완료** — Phase 12(AWS 이전) 본격 착수 전 별도로 진행해야 한다
 
 ---
 
@@ -312,13 +313,14 @@ M1 ─────────────────────────�
 |---|---|---|
 | 12-1 | 배포 준비 점검 (하드코딩·시크릿·빌드·권한) | **PRD 9.1 환경변수 전 항목**이 외부 주입이며 소스 하드코딩 0건(파일 저장소 4종 `APP_UPLOAD_DIR`·`APP_S3_BUCKET`·`APP_S3_REGION`·`APP_DOWNLOAD_URL_TTL_SECONDS` 포함) · 시크릿 파일이 커밋 이력에 없음 |
 | 12-2 | RDS PostgreSQL 연결 | prod 프로파일로 기동. **`ddl-auto: validate` 통과** — 로컬 `update`로 만들어진 스키마를 RDS에 반영한 뒤 검증한다(Phase 1 DDL 전략) |
-| 12-3 | S3·SES 구현체 전환 | `APP_STORAGE_TYPE=s3`·`APP_MAIL_TYPE=ses`로 **환경변수만 바꿔 동작 전환**, 기존 서비스 코드·**프론트 코드 무변경**. `download-url`이 presigned URL을 반환하고 **`/api/attachments/{id}/download`는 더 이상 호출되지 않음**(PRD 8장), `APP_S3_BUCKET`·`APP_S3_REGION` 주입, **버킷 퍼블릭 액세스 차단** |
+| 12-3 | S3·SES 구현체 전환 | `APP_STORAGE_TYPE=s3`·`APP_MAIL_TYPE=ses`로 **환경변수만 바꿔 동작 전환**, 기존 서비스 코드 무변경. **프론트는 `download-url` 응답이 절대 URL(S3)·상대경로(로컬) 어느 쪽이든 열 수 있도록 최소 분기 로직 필요**(2026-09-04 구현 중 발견 — 기존 코드가 `NEXT_PUBLIC_API_BASE_URL`을 무조건 접두해 presigned URL이 깨지는 버그가 있었음, `lib/utils.ts`의 `toAbsoluteUrl()`로 수정 완료). `download-url`이 presigned URL을 반환하고 **`/api/attachments/{id}/download`는 더 이상 호출되지 않음**(PRD 8장), `APP_S3_BUCKET`·`APP_S3_REGION` 주입, **버킷 퍼블릭 액세스 차단** |
 | 12-4 | EC2 백엔드 배포 (systemd + Nginx) | `/actuator/health` 200, 재부팅 후 자동 기동, HTTPS 적용(OPEN-02 결정안) |
 | 12-5 | Amplify 프론트 배포 | 운영 도메인 접속, `APP_CORS_ALLOWED_ORIGINS`·`NEXT_PUBLIC_API_BASE_URL`·`APP_PASSWORD_RESET_URL`·구글 리다이렉트 URI 갱신 (OPEN-03 연동) |
 | 12-6 | 최종 운영 점검 | **운영에서 Swagger 차단** · CORS 와일드카드 없음 · RDS 자동 백업 활성화 · S3 퍼블릭 차단 · 로그 표준출력 |
 
 - **선행:** Phase 11 완료 + **OPEN-01~04 결정 완료**
 - **설치:** **AWS SDK v2 (`s3`)** — 12-3에서 설치 (PRD 1.3 ❌ → 설치 후 표 갱신)
+- **조기 착수 기록(2026-09-04):** 12-3(S3 구현체 전환)만 다른 선행 조건(12-1·12-2·OPEN-01~04 결정)을 기다리지 않고 먼저 착수했다. `FileStorage` 인터페이스가 이미 Phase 10에서 저장소 종류를 추상화해 두었고, `S3FileStorage`는 기존 서비스·컨트롤러 코드에 영향을 주지 않는 순수 추가라 배포 순서(EC2·RDS·Amplify)와 독립적으로 안전하게 먼저 구현 가능하다고 판단했다. `S3FileStorage`·`S3StorageConfig`(`com.example.common.storage`) 추가, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`로 자격증명 명시 주입, 로컬 개발 환경도 `application-local.properties`에서 즉시 S3 사용으로 전환(`LocalFileStorage`는 코드상 유지, 기본 비활성화). **12-1(배포 준비 점검)·12-2(RDS 연결)·12-4~12-6은 여전히 미착수**이며, 이 항목들의 선행 조건(Phase 11 M2 게이트 — 문서 반영은 완료, OPEN-01~04 결정)은 유효하다
 - **선결 과제:** Amplify의 Next.js 16 지원 여부 확인 결과(OPEN-01)에 따라 12-5를 정적 export 또는 EC2 `next start`로 대체
 - **커버:** FR-F03·FR-F05(S3 구현체), FR-R01(SES 구현체), 비기능 — 이식성·보안·운영
 
@@ -365,7 +367,7 @@ M1 ─────────────────────────�
 **M2 — 확장 기능**
 - [x] Phase 9 · 비밀번호 재설정 (**spring-boot-starter-mail 설치**)
 - [x] Phase 10 · 파일 첨부
-- [ ] Phase 11 · 관리자 페이지 · **M2 게이트 (PRD 12.1 + 12.2, 24개)**
+- [x] Phase 11 · 관리자 페이지 · **M2 게이트 (PRD 12.1 + 12.2, 24개) — 문서 반영 완료(2026-09-04, 코드는 2026-09-02부터 완료 상태였음)**
 - [ ] OPEN-01~04 결정 (Phase 11 종료 시점)
 
 **M3 — 운영 배포**
@@ -429,3 +431,5 @@ M1 ─────────────────────────�
 | 1.9 | 2026-08-31 | **Phase 4 완료 반영.** ① `TodoController`(API 6종)·`TodoService`(소유권 검증·HTML 정제·페이지네이션 통합)·`TodoRepository` 필터 메서드·`common.response.PageResponse<T>`·`common.exception.TodoNotFoundException`·`todo.util.HtmlSanitizer`(jsoup 1.18.3, `Safelist` 화이트리스트) 구현 완료 ② 타인 리소스 접근 시 존재 여부와 무관하게 단일 쿼리(`findByIdAndUserId`)로 404 통일(FR-T07), `@SQLRestriction`으로 Soft Delete 후 목록·단건 조회 모두 제외(FR-T06) 확인 ③ 상태 필터(`all`/`pending`/`completed`)·정렬(`createdAt`/`dueDate`, 화이트리스트 폴백)·`PageResponse<T>`(0-base) 응답 형식 확인(FR-L01~L04) ④ 단위·슬라이스 테스트 5개 클래스 신설(총 29건), `./mvnw test` 전체 44건 통과 ⑤ 로컬 서버 실기동으로 Swagger 6종 노출·401·전체 CRUD·타인 소유 404까지 통합 검증 완료 ⑥ Spring Boot 4의 `@DataJpaTest`/`@AutoConfigureTestDatabase` 패키지 이동과 `Replace.NONE` 필수 사실을 실측 확인(Phase 9·10 재사용 예정) ⑦ `docs/PRD.md` 1.3 표의 jsoup 설치 상태를 1.18.3/✅로 갱신 ⑧ Phase 4 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 4 항목 체크, 7장 일정 표 비고 기록, `/tasks/001-todo-api.md` 작업 파일 신설 |
 | 1.10 | 2026-08-31 | **Phase 5 완료 반영.** ① `@tanstack/react-query`(^5.102.8)·`next-themes`(^0.4.6) 설치, `next.config.ts`에 `typedRoutes: true` 선제 적용 ② `types/api.ts`(백엔드 `ErrorResponse` record와 필드 일치)·`lib/auth/token.ts`(Phase 6 정식 완성 전 최소 버전)·`lib/api/client.ts`(`fetchApi<T>` + `ApiError`, 401 시 `CustomEvent` 발행으로 Phase 6에 리다이렉트 위임) 작성 ③ `providers/QueryProvider.tsx`(`useState` 기반 SSR-safe 인스턴스)·`providers/ThemeProvider.tsx`(`defaultTheme="dark"` + `enableSystem={false}`로 시스템 감지 아닌 다크 고정 기본값)를 `app/layout.tsx`에 마운트, `suppressHydrationWarning` 추가 ④ `components/common/`에 `Pagination`(0-base 유지, 표시 직전에만 1-base 변환)·`EmptyState`·`ErrorState`·`Skeleton`·`Header`·`ThemeToggle` 6종 작성 ⑤ next-themes 공식 `mounted` state 예시가 `eslint-config-next` 16.3.3의 `react-hooks/set-state-in-effect` 규칙과 충돌하는 것을 실측하고 `resolvedTheme` 기반으로 대체 ⑥ `.env.local.example` 신설, `.gitignore`에 `!.env*.example` 예외 패턴 추가 ⑦ `npm run typecheck`·`lint`·`format:check`·`build` 전체 통과, Playwright로 다크 모드 기본 적용·콘솔 에러 0건 실측 확인 ⑧ `docs/PRD.md` 1.3 표의 TanStack Query·next-themes 설치 상태 갱신 ⑨ Phase 5 "현재 상태"를 완료로 갱신, 5장 체크리스트에서 Phase 5 항목 체크, 7장 일정 표 비고 기록 |
 | 1.11 | 2026-09-02 | **Phase 10 완료 반영.** ① `Attachment` 엔티티(`BaseEntity` 미상속, `PasswordResetToken`처럼 `created_at`·`deleted_at`만 직접 선언, `@SQLRestriction`)·`AttachmentRepository`(N+1 회피용 배치 카운트 `countByTodoIdIn` 포함) 작성 ② `FileStorage` 인터페이스(`store`/`generateDownloadUrl`/`load`) + `LocalFileStorage`(`@ConditionalOnProperty(app.storage-type)`, `MailSender` 전략 패턴과 동일)·`AttachmentTokenProvider`(기존 `JWT_SECRET`으로 서명하는 별도 jjwt 발급·검증 클래스, FR-F05) 구현 ③ `AttachmentService`: 모든 메서드가 `findByIdAndUserId`로 Todo 소유권을 먼저 검증한 뒤에만 Attachment를 다뤄 Soft Delete된 Todo에 대한 `EntityNotFoundException` 위험을 원천 차단, FR-F01(5개·10MB)·FR-F02(9종 확장자+Content-Type 화이트리스트)·FR-F04(UUID 키)·FR-F06(Soft Delete) 구현 ④ `AttachmentController`(업로드·목록·download-url 발급·download·삭제 5종), `TodoResponse.attachmentCount`(카운트 서브쿼리), `SecurityConfig.PERMIT_ALL_PATHS`에 `/api/attachments/*/download` 추가 ⑤ 신규 통합테스트 `AttachmentControllerIntegrationTest`(8건: 용량·형식·개수 제한 400, 타인 Todo/첨부 404, 정상 업로드~다운로드 흐름, 위조 토큰 404, 삭제 후 목록 제외, PRD 12.2 항목 16·17) 작성, `./mvnw test` 전체 82건 통과 ⑥ 프론트 `lib/api/attachments.ts`(`uploadAttachment`만 `fetchApi`를 거치지 않는 별도 `fetch` 함수로 분리 — `FormData` 업로드는 브라우저가 `boundary` 포함 `Content-Type`을 자동 설정해야 하므로 JSON 전용 계약과 공존 불가)·`hooks/useAttachments.ts`(`useTodos.ts` 패턴, 업로드·삭제 성공 시 첨부 목록과 `todoKeys.lists()`를 함께 invalidate) 작성 ⑦ `AttachmentUploader`(드래그앤드롭+클릭 업로드)·`AttachmentList`(이미지 썸네일은 `download-url`을 먼저 발급받아 `img src`로 사용, 파일 크기 포맷 `formatFileSize` 신설) 작성, `TodoFormDialog`는 edit 모드에서만·`TodoDetailDialog`는 항상 노출, `TodoCard`에 클립 아이콘+개수 배지(FR-F08) 추가 ⑧ `npm run validate` 전체 통과, 실제 백엔드·프론트 서버를 기동해 Playwright로 업로드→썸네일→배지 반영→다운로드→삭제 전체 흐름과 업로드 요청의 `Content-Type: multipart/form-data; boundary=...` 자동 설정을 브라우저에서 실측 확인 ⑨ `S3FileStorage`는 미생성 상태로 Phase 12-3에 위임됨을 재확인, `MultipartFile`(webmvc 내장)·`UUID`(JDK 내장)·jjwt(기존 설치)로 신규 라이브러리 설치가 없어 PRD 1.3 표 변경 불필요, PRD 9.1의 `APP_STORAGE_TYPE`·`APP_UPLOAD_DIR`·`APP_DOWNLOAD_URL_TTL_SECONDS`가 실제 코드에서 사용됨을 확인 ⑩ 5장 체크리스트에서 Phase 10 항목 체크, 7장 일정 표 비고 기록 |
+| 1.12 | 2026-09-04 | **Phase 11 완료 반영(사후 확인).** ROADMAP 문서화가 코드 완성보다 늦어졌던 공백 보정. 백엔드 커밋 `98b5e71`(2026-09-02)·프론트 커밋 `6540a55`(같은 날짜)로 관리자 페이지 API·화면이 이미 완료돼 있었음을 확인. Phase 11 "현재 상태" 절 신설, 5장 체크리스트 체크. OPEN-01~04 결정은 여전히 미완료 상태로 남김(범위 밖) |
+| 1.13 | 2026-09-04 | **Phase 12-3(S3 전환) 조기 착수.** ① 다른 선행 조건(12-1·12-2·OPEN-01~04 결정)을 기다리지 않고 `S3FileStorage`만 먼저 구현하기로 결정 — `FileStorage` 추상화가 이미 Phase 10에 있어 배포 순서와 독립적으로 안전하다고 판단 ② Phase 12 설치 항목에 AWS SDK v2(`s3`) 설치 완료 기록(구현 중 `s3-presigner`가 별도 아티팩트가 아니라 `s3`에 포함되어 있음을 확인), PRD 1.3 표 동기화 ③ **로컬 개발 환경도 `application-local.properties`에서 즉시 S3 사용으로 전환**(`LocalFileStorage`는 코드상 유지하되 기본 비활성화) ④ 12-3 완료 조건에 프론트 `download-url` 처리 로직의 절대/상대 URL 분기 필요성 추가(기존 "프론트 코드 무변경" 서술이 부정확했던 버그 발견 반영, `lib/utils.ts`의 `toAbsoluteUrl()`로 수정) ⑤ AWS 자격증명은 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` 환경변수로 명시 주입(`StaticCredentialsProvider`), PRD 9.1 표에 신설 |
