@@ -3,3 +3,12 @@ todo-backend/
 .claude/
 shrimp_data/
 .playwright-mcp/
+
+# AWS 액세스 키 등 시크릿 파일 (PRD 9.1 — 시크릿은 전부 외부 주입, 커밋 금지)
+*accessKeys*.csv
+*credentials*.csv
+.env*
+!.env*.example
+
+# DB 백업 덤프 (유저 데이터 포함 가능성)
+*.backup
